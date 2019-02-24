@@ -52,6 +52,10 @@ fut_means = [ (int(name.split('-')[0]),
 ]
 
 fut_ = [ (x[1], x[2]) for x in fut_means if x[0] == hist_sz ]
+#print hist_sz
+#print fut_means
+#print fut_
+#sys.exit()
 
 with open("runtimes/hist-{0}.json".format(hist_sz)) as infile:
     runtimes = json.load(infile)
@@ -139,8 +143,12 @@ def plot_all(inds, kernel_means, axis, width, space, ylim):
     for i, info in enumerate(tmp_kernels):
         name, data = info
         _, time = zip(*data)
-        _inds = inds - (1 - space) / 2. + i * width + 0.5 * width
-        _tmp = axis.bar(_inds, np.array(time), width,
+        if len(time) < len(inds):
+            inds = inds[:len(time)]
+        inds = inds - (1 - space) / 2. + i * width + 0.5 * width
+        if len(inds) < len(time):
+            time = time[:len(inds)]
+        _tmp = axis.bar(inds, np.array(time), width,
                         label=name, color=colors[name])
         autolabel(_tmp, ylim)
         tmp += _tmp

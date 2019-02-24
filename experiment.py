@@ -105,7 +105,7 @@ with open(out_file, 'wb') as myfile:
     for _ in range(iterations):
         print '{0} {1} {2} {3} {4}'.format(
             pgm_path, 'Sequential version', 0, his_sz, filename)
-        cmd  = [pgm_path, 00, 0, his_sz, filename]
+        cmd  = [pgm_path, '00', '0', his_sz, filename]
         try:
             out  = check_output(cmd)
             t0 = findall("\d+.\d+", out)
@@ -116,5 +116,5 @@ with open(out_file, 'wb') as myfile:
         except CalledProcessError as err:
             print err.output
             t1 = 0
-        timing['SEQUENTIAL'].append(int(t1))
+        timing['SEQUENTIAL'][0].append(int(t1))
     json.dump(timing, myfile)

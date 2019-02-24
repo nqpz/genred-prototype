@@ -10,7 +10,7 @@
 
 /* x0: One histogram in global memory. One pixel per thread.
  * x1: One histogram in global memory. Chunking.
- * x2: Cooporation in global memory.   Chunking.
+ * x2: Cooperation in global memory.   Chunking.
  * x3: Coop. in sh. and glob. memory.  Chunking.
  */
 #define SEQUENTIAL 00
@@ -61,7 +61,7 @@ int main(int argc, const char* argv[])
     printf("Error: Histogram exceeds shared memory size\n");
     return -1;
   } else if(restrict && coop_lvl_tmp > BLOCK_SZ) {
-    printf("Error: Cooporation level exceeds block size\n");
+    printf("Error: Cooperation level exceeds block size\n");
     return -1;
   }
 
@@ -134,17 +134,17 @@ int main(int argc, const char* argv[])
     if(kernel == 10 || kernel == 20 || kernel == 30) {
       printf("Number of threads:    %d\n", img_sz);
       printf("Sequential chunk:     %d\n", 1);
-      printf("Cooporation level:    %d\n", img_sz);
+      printf("Cooperation level:    %d\n", img_sz);
       printf("Number of histograms: %d\n", 1);
     } else if(kernel == 11 || kernel == 21 || kernel == 31) {
       printf("Number of threads:    %d\n", num_threads);
       printf("Sequential chunk:     %d\n", seq_chunk);
-      printf("Cooporation level:    %d\n", num_threads);
+      printf("Cooperation level:    %d\n", num_threads);
       printf("Number of histograms: %d\n", 1);
     } else {
       printf("Number of threads:    %d\n", num_threads);
       printf("Sequential chunk:     %d\n", seq_chunk);
-      printf("Cooporation level:    %d\n", coop_lvl);
+      printf("Cooperation level:    %d\n", coop_lvl);
       printf("Number of histograms: %d\n", num_hists);
     }
     printf("====\n");

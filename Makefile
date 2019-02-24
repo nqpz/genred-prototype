@@ -12,19 +12,20 @@ REQS=kernels.cu.h misc.cu.h
 CU_FILE=host
 
 FUT_FILE=reduce
-FC=futhark-opencl
+FB=opencl
+FC=futhark $(FB)
 
 # For experiment
 DATA_PATH=data/cuda
 RUNT_PATH=runtimes
-DATA_SIZE  =10000000
-ITERATIONS =5
+DATA_SIZE=10000000
+ITERATIONS=5
 COOP_LEVELS=1 4 16 64 256 1024 4096 16384 61440 # last is max threads
 HISTO_SIZES=16 64 256 1024 4096 16384 61440
 
 .PHONY: all plot clean_runtimes clean_data clean_pfds clean_bins
 
-.PRECIOUS: $(RUNT_PATH)/hist-%.json hist-%-full.json $(DATA_PATH)/%-$(DATA_SIZE).dat $(DATA_PATH)/futhark/%.dat
+.PRECIOUS: $(RUNT_PATH)/hist-%.json hist-%-full.json $(DATA_PATH)/%-$(DATA_SIZE).dat $(DATA_PATH)/futhark/%
 
 all:	$(CU_FILE)
 
@@ -37,7 +38,7 @@ $(FUT_FILE):	$(FUT_FILE).fut
 	$(FC) $<
 
 # Run experiment
-plot: 	$(HISTO_SIZES:%=hist-%.pdf) $(HISTO_SIZES:%=hist-%-full.pdf)
+plot:	$(HISTO_SIZES:%=hist-%.pdf) $(HISTO_SIZES:%=hist-%-full.pdf)
 
 # Generate CUDA data (Futhark data should be created manually!)
 $(DATA_PATH)/%-$(DATA_SIZE).dat:
@@ -52,7 +53,7 @@ $(RUNT_PATH)/hist-%.json: $(CU_FILE) $(DATA_PATH)/%-$(DATA_SIZE).dat
 
 $(RUNT_PATH)/fut_times.json: $(FUT_FILE).fut
 	@echo '=== Running Futhark experiment'
-	futhark-bench --runs=$(ITERATIONS) --compiler=$(FC) --json $@ $<
+	futhark bench --runs=$(ITERATIONS) --backend=$(FB) --json $@ $<
 
 # Create graphs
 hist-%.pdf hist-%-full.pdf: $(RUNT_PATH)/hist-%.json $(RUNT_PATH)/fut_times.json

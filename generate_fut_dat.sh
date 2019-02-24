@@ -18,7 +18,7 @@ for i in 16 64 256 1024 4096 16384 61440; do
             continue
         fi
         printf "Generating %d-%d\n" $j $i
-        futhark-dataset --binary --i32-bounds=0:$i \
+        futhark dataset --binary --i32-bounds=0:$i \
                         -g [$j][$i]i32 > $DATA_PATH/$i-$j
     done
 done
