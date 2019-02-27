@@ -55,6 +55,11 @@ following:
     . `[13|23|33]`: Multiple histograms in both shared on global
     memory, and chunking.
 
+    . `[14|24|34]`: Multiple histograms in both shared on global
+    memory, and chunking, and warp optimizations.
+
+    . `35`: Alternative to `atomicExch`.
+
     where versions prefixed by `1` are implemented using
     `atomicAdd`, versions prefixed by `2` are implemented by
     using `atomicCAS`, and versions prefixed by `3` are
