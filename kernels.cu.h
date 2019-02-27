@@ -509,7 +509,13 @@ aadd_shared_chunk_coop_warp_kernel(T *d_img,
   const unsigned int tid = threadIdx.x;
   const unsigned int gid = blockIdx.x * blockDim.x + tid;
   int his_block_sz = hists_per_block * his_sz;
-  int lhid = tid % WARP_SZ * his_sz; // assumes 32 histograms
+
+  // This works best with at least 32 histograms, i.e. when coop_lvl is 32 (and
+  // BLOCK_SZ is 1024), so that each thread in a warp can get a separate
+  // histogram, as we want to reduce in-warp conflicts (conflicts can still
+  // occur in general).
+  int lhid = tid % (BLOCK_SZ / coop_lvl) * his_sz;
+
   int ghid = blockIdx.x * hists_per_block * his_sz;
 
   // initialize local histograms
@@ -1075,7 +1081,7 @@ CAS_shared_chunk_coop_warp_kernel(IN_T  *d_img,
   const unsigned int tid = threadIdx.x;
   const unsigned int gid = blockIdx.x * blockDim.x + tid;
   int his_block_sz = hists_per_block * his_sz;
-  int lhidx = tid % WARP_SZ * his_sz; // assumes 32 histograms
+  int lhidx = tid % (BLOCK_SZ / coop_lvl) * his_sz;
   int ghidx = blockIdx.x * hists_per_block * his_sz;
 
   // initialize local histograms
@@ -1764,7 +1770,7 @@ exch_shared_chunk_coop_warp_kernel(IN_T  *d_img,
   // global thread id
   const unsigned int tid = threadIdx.x;
   const unsigned int gid = blockIdx.x * blockDim.x + tid;
-  int lhidx = tid % WARP_SZ * his_sz; // assumes 32 histograms
+  int lhidx = tid % (BLOCK_SZ / coop_lvl) * his_sz;
   int ghidx = blockIdx.x * hists_per_block * his_sz;
   int his_block_sz = hists_per_block * his_sz;
 
