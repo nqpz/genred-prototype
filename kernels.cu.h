@@ -1938,11 +1938,9 @@ exch_shared_chunk_coop_shlock_kernel(IN_T  *d_img,
   // initialize local histograms and locks
   volatile extern __shared__ int sh_mem[];
   volatile OUT_T *sh_his = sh_mem;
-  volatile int *sh_lck = (int *)&sh_his[his_block_sz];
 
   for(int i=tid; i<his_block_sz; i+=blockDim.x) {
     sh_his[i] = OP::identity();
-    sh_lck[i] = 0;
   }
   __syncthreads();
 
@@ -1961,10 +1959,16 @@ exch_shared_chunk_coop_shlock_kernel(IN_T  *d_img,
       }
 
       while(!done) {
-        sh_lck[lhidx + idx] = tid;
-        if( sh_lck[lhidx + idx] == tid ) {
+        // Save the value at the histogram index in register memory.
+        OUT_T saved_val = sh_his[lhidx + idx];
+        // Temporarily use the histogram as a lock.  This write only works if
+        // the thread id (representable in a few bits, but here just stored as
+        // an int) does not take up more space than an OUT_T element.
+        sh_his[lhidx + idx] = (OUT_T) tid;
+        // Check if this thread won the write.
+        if( (int) sh_his[lhidx + idx] == tid ) {
           sh_his[lhidx + idx] =
-            OP::apply(sh_his[lhidx + idx], val);
+            OP::apply(saved_val, val);
           //          __threadfence();
           done = 1;
         }
@@ -1998,16 +2002,17 @@ exch_shared_chunk_coop_shlock(IN_T  *h_img,
     return -1;
   }
 
+  // A histogram must not be shared among warps.  We depend on lock-step
+  // execution.
+  assert(his_sz <= WARP_SZ && WARP_SZ % his_sz == 0);
+
   // allocate device memory
   unsigned int img_mem_sz = img_sz * sizeof(IN_T);
   unsigned int his_mem_sz = his_sz * sizeof(OUT_T);
-  unsigned int lck_mem_sz = his_sz * sizeof(int);
 
   // histograms per block - maximum value is 1024
   int hists_per_block = min(
-                            (SH_MEM_SZ /
-                             (his_mem_sz + lck_mem_sz)
-                            ),
+                            (SH_MEM_SZ / his_mem_sz),
                             (BLOCK_SZ / coop_lvl)
                             );
   int thrds_per_block = hists_per_block * coop_lvl;
@@ -2020,8 +2025,8 @@ exch_shared_chunk_coop_shlock(IN_T  *h_img,
     printf("====\n");
   }
 
-  if(hists_per_block * (his_mem_sz + lck_mem_sz) > SH_MEM_SZ) {
-    printf("Error: Histograms and locks exceed "
+  if(hists_per_block * his_mem_sz > SH_MEM_SZ) {
+    printf("Error: Histograms exceed "
            "shared memory size\n");
     return -1;
   }
@@ -2056,7 +2061,7 @@ exch_shared_chunk_coop_shlock(IN_T  *h_img,
 
   exch_shared_chunk_coop_shlock_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst,
-    (lck_mem_sz + his_mem_sz) * hists_per_block>>>
+    his_mem_sz * hists_per_block>>>
     (d_img, d_his, img_sz, his_sz,
      num_threads, seq_chunk, coop_lvl, num_hists, hists_per_block);
 

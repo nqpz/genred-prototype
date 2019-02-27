@@ -58,7 +58,8 @@ following:
     . `[14|24|34]`: Multiple histograms in both shared on global
     memory, and chunking, and warp optimizations.
 
-    . `35`: Alternative to `atomicExch`.
+    . `35`: Alternative to the `atomicExch` in `33`.  Wastes less shared
+    memory.
 
     where versions prefixed by `1` are implemented using
     `atomicAdd`, versions prefixed by `2` are implemented by
