@@ -2008,10 +2008,6 @@ exch_shared_chunk_coop_shlock(IN_T  *h_img,
     return -1;
   }
 
-  // A histogram must not be shared among warps.  We depend on lock-step
-  // execution.
-  assert(his_sz <= WARP_SZ && WARP_SZ % his_sz == 0);
-
   // allocate device memory
   unsigned int img_mem_sz = img_sz * sizeof(IN_T);
   unsigned int his_mem_sz = his_sz * sizeof(OUT_T);
@@ -2023,6 +2019,10 @@ exch_shared_chunk_coop_shlock(IN_T  *h_img,
                             );
   int thrds_per_block = hists_per_block * coop_lvl;
   int num_blocks = ceil(num_hists / (float)hists_per_block);
+
+  // A histogram must not be shared among warps.  We depend on lock-step
+  // execution.
+  assert(hists_per_block >= BLOCK_SZ / WARP_SZ && WARP_SZ % his_sz == 0);
 
   if(PRINT_INFO) {
     printf("Histograms per block: %d\n", hists_per_block);
