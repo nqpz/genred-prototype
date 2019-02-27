@@ -2,6 +2,7 @@
 #define MISC_H
 
 #include <math.h>
+#include <cassert>
 
 //#define HWD       (61440)
 #define HWD       (30720)
@@ -53,13 +54,13 @@ int timeval_subtract(struct timeval* result,
 
 /* Validate input */
 int validate_input(int argc, const char* argv[],
-                   int *his_sz, int *kernel, int *coop_lvl)
+                   int *his_sz, int *kernel, int *coop_lvl, int *n_runs)
 {
   /* check number of arguments */
-  if(argc != 5) {
+  if(!(argc == 5 || argc == 6)) {
     printf("Usage: "
            "%s <kernel> <coop. level> <histo. size> "
-           "<filename>\n",
+           "<filename> [<n runs>=1]\n",
            argv[0]);
     return 1;
   }
@@ -77,6 +78,15 @@ int validate_input(int argc, const char* argv[],
   /* parse histogram size */
   if( sscanf(argv[3], "%i", his_sz ) != 1) {
     printf("Error: Failed to parse histogram size\n");
+  }
+
+  if (argc == 6) {
+    if( sscanf(argv[5], "%i", n_runs ) != 1) {
+      printf("Error: Failed to parse number of runs\n");
+    }
+    assert(n_runs > 0);
+  } else {
+    *n_runs = 1;
   }
 
   return 0;

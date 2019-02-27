@@ -19,21 +19,25 @@
 #define AADD_NOSHARED_CHUNK_FULLCOOP    11
 #define AADD_NOSHARED_CHUNK_COOP        12
 #define AADD_SHARED_CHUNK_COOP          13
+#define AADD_SHARED_CHUNK_COOP_WARP     14
 
 #define ACAS_NOSHARED_NOCHUNK_FULLCOOP  20
 #define ACAS_NOSHARED_CHUNK_FULLCOOP    21
 #define ACAS_NOSHARED_CHUNK_COOP        22
 #define ACAS_SHARED_CHUNK_COOP          23
+#define ACAS_SHARED_CHUNK_COOP_WARP     24
 
 #define AEXCH_NOSHARED_NOCHUNK_FULLCOOP 30
 #define AEXCH_NOSHARED_CHUNK_FULLCOOP   31
 #define AEXCH_NOSHARED_CHUNK_COOP       32
 #define AEXCH_SHARED_CHUNK_COOP         33
+#define AEXCH_SHARED_CHUNK_COOP_WARP    34
+#define AEXCH_SHARED_CHUNK_COOP_SHLOCK  35
 
 // debugging
-#define PRINT_INFO     0
+#define PRINT_INFO     1
+#define PRINT_INVALIDS 1
 #define PRINT_SEQ_TIME 0
-#define PRINT_INVALIDS 0
 
 // runtime
 #define MICROS 1 // 0 will give runtime in millisecs.
@@ -45,18 +49,211 @@
 #define OUT_T int
 #define MY_OP Add<OUT_T>
 
+const char* kernel_name(int kernel) {
+  const char* name;
+  switch(kernel) {
+    /* Atomic add */
+  case AADD_NOSHARED_NOCHUNK_FULLCOOP:
+    name = "AADD_NOSHARED_NOCHUNK_FULLCOOP";
+    break;
+  case AADD_NOSHARED_CHUNK_FULLCOOP:
+    name = "AADD_NOSHARED_CHUNK_FULLCOOP";
+    break;
+  case AADD_NOSHARED_CHUNK_COOP:
+    name = "AADD_NOSHARED_CHUNK_COOP";
+    break;
+  case AADD_SHARED_CHUNK_COOP:
+    name = "AADD_SHARED_CHUNK_COOP";
+    break;
+  case AADD_SHARED_CHUNK_COOP_WARP:
+    name = "AADD_SHARED_CHUNK_COOP_WARP";
+    break;
+
+    /* Locking - CAS */
+  case ACAS_NOSHARED_NOCHUNK_FULLCOOP:
+    name = "ACAS_NOSHARED_NOCHUNK_FULLCOOP";
+    break;
+  case ACAS_NOSHARED_CHUNK_FULLCOOP:
+    name = "ACAS_NOSHARED_CHUNK_FULLCOOP";
+    break;
+  case ACAS_NOSHARED_CHUNK_COOP:
+    name = "ACAS_NOSHARED_CHUNK_COOP";
+    break;
+  case ACAS_SHARED_CHUNK_COOP:
+    name = "ACAS_SHARED_CHUNK_COOP";
+    break;
+  case ACAS_SHARED_CHUNK_COOP_WARP:
+    name = "ACAS_SHARED_CHUNK_COOP_WARP";
+    break;
+
+    /* Locking - Exch */
+  case AEXCH_NOSHARED_NOCHUNK_FULLCOOP:
+    name = "AEXCH_NOSHARED_NOCHUNK_FULLCOOP";
+    break;
+  case AEXCH_NOSHARED_CHUNK_FULLCOOP:
+    name = "AEXCH_NOSHARED_CHUNK_FULLCOOP";
+    break;
+  case AEXCH_NOSHARED_CHUNK_COOP:
+    name = "AEXCH_NOSHARED_CHUNK_COOP";
+    break;
+  case AEXCH_SHARED_CHUNK_COOP:
+    name = "AEXCH_SHARED_CHUNK_COOP";
+    break;
+  case AEXCH_SHARED_CHUNK_COOP_WARP:
+    name = "AEXCH_SHARED_CHUNK_COOP_WARP";
+    break;
+  case AEXCH_SHARED_CHUNK_COOP_SHLOCK:
+    name = "AEXCH_SHARED_CHUNK_COOP_SHLOCK";
+    break;
+  case SEQUENTIAL:
+    name = "SEQUENTIAL";
+    break;
+  default:
+    name = "(unknown)";
+    break;
+  }
+  return name;
+}
+
+int kernel_run(int kernel,
+               IN_T *h_img,
+               OUT_T *h_his,
+               OUT_T *h_seq,
+               int img_sz,
+               int his_sz,
+               int num_threads,
+               int seq_chunk,
+               int coop_lvl,
+               int num_hists,
+               struct timeval *t_start,
+               struct timeval *t_end) {
+  int res;
+  switch(kernel) {
+    /* Atomic add */
+  case AADD_NOSHARED_NOCHUNK_FULLCOOP:
+    res = aadd_noShared_noChunk_fullCoop<IN_T>
+      (h_img, h_his, img_sz, his_sz, t_start, t_end,
+       PRINT_INFO);
+    break;
+  case AADD_NOSHARED_CHUNK_FULLCOOP:
+    res = aadd_noShared_chunk_fullCoop<IN_T>
+      (h_img, h_his, img_sz, his_sz, num_threads,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case AADD_NOSHARED_CHUNK_COOP:
+    res = aadd_noShared_chunk_coop<IN_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case AADD_SHARED_CHUNK_COOP:
+    res = aadd_shared_chunk_coop<IN_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case AADD_SHARED_CHUNK_COOP_WARP:
+    res = aadd_shared_chunk_coop_warp<IN_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+
+    /* Locking - CAS */
+  case ACAS_NOSHARED_NOCHUNK_FULLCOOP:
+    res = CAS_noShared_noChunk_fullCoop
+      <MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz, t_start, t_end,
+       PRINT_INFO);
+    break;
+  case ACAS_NOSHARED_CHUNK_FULLCOOP:
+    res = CAS_noShared_chunk_fullCoop<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz, num_threads,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case ACAS_NOSHARED_CHUNK_COOP:
+    res = CAS_noShared_chunk_coop<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case ACAS_SHARED_CHUNK_COOP:
+    res = CAS_shared_chunk_coop<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case ACAS_SHARED_CHUNK_COOP_WARP:
+    res = CAS_shared_chunk_coop_warp<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+
+    /* Locking - Exch */
+  case AEXCH_NOSHARED_NOCHUNK_FULLCOOP:
+    res = exch_noShared_noChunk_fullCoop<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz, t_start, t_end,
+       PRINT_INFO);
+    break;
+  case AEXCH_NOSHARED_CHUNK_FULLCOOP:
+    res = exch_noShared_chunk_fullCoop<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz, num_threads, seq_chunk,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case AEXCH_NOSHARED_CHUNK_COOP:
+    res = exch_noShared_chunk_coop<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, seq_chunk, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case AEXCH_SHARED_CHUNK_COOP:
+    res = exch_shared_chunk_coop<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, seq_chunk, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case AEXCH_SHARED_CHUNK_COOP_WARP:
+    res = exch_shared_chunk_coop_warp<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, seq_chunk, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case AEXCH_SHARED_CHUNK_COOP_SHLOCK:
+    res = exch_shared_chunk_coop_shlock<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, seq_chunk, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case SEQUENTIAL:
+    scatter_seq<MY_OP, IN_T, OUT_T>
+      (h_img, h_seq, img_sz, his_sz, t_start, t_end);
+    res = 0;
+    break;
+  default:
+    res = 1;
+    break;
+  }
+  return res;
+}
+
 int main(int argc, const char* argv[])
 {
   /* validate and parse cmd-line arguments */
-  int his_sz, kernel, coop_lvl_tmp;
+  int his_sz, kernel, coop_lvl_tmp, n_runs;
   if(validate_input(argc, argv,
-                    &his_sz, &kernel, &coop_lvl_tmp) != 0) {
+                    &his_sz, &kernel, &coop_lvl_tmp, &n_runs) != 0) {
     return -1;
   }
 
   /* abort as soon as possible */
   unsigned int his_mem_sz = his_sz * sizeof(OUT_T);
-  int restrict = (kernel == 13 || kernel == 23 || kernel == 33);
+  int restrict = (kernel == AADD_SHARED_CHUNK_COOP ||
+                  kernel == AADD_SHARED_CHUNK_COOP_WARP ||
+                  kernel == ACAS_SHARED_CHUNK_COOP ||
+                  kernel == ACAS_SHARED_CHUNK_COOP_WARP ||
+                  kernel == AEXCH_SHARED_CHUNK_COOP ||
+                  kernel == AEXCH_SHARED_CHUNK_COOP_WARP);
   if(restrict && (his_mem_sz > SH_MEM_SZ)) {
     printf("Error: Histogram exceeds shared memory size\n");
     return -1;
@@ -131,12 +328,16 @@ int main(int argc, const char* argv[])
 
   if(PRINT_INFO) {
     printf("== Heuristic formulas ==\n");
-    if(kernel == 10 || kernel == 20 || kernel == 30) {
+    if(kernel == AADD_NOSHARED_NOCHUNK_FULLCOOP ||
+       kernel == ACAS_NOSHARED_NOCHUNK_FULLCOOP ||
+       kernel == AEXCH_NOSHARED_NOCHUNK_FULLCOOP) {
       printf("Number of threads:    %d\n", img_sz);
       printf("Sequential chunk:     %d\n", 1);
       printf("Cooperation level:    %d\n", img_sz);
       printf("Number of histograms: %d\n", 1);
-    } else if(kernel == 11 || kernel == 21 || kernel == 31) {
+    } else if(kernel == AADD_NOSHARED_CHUNK_FULLCOOP ||
+              kernel == ACAS_NOSHARED_CHUNK_FULLCOOP ||
+              kernel == AEXCH_NOSHARED_CHUNK_FULLCOOP) {
       printf("Number of threads:    %d\n", num_threads);
       printf("Sequential chunk:     %d\n", seq_chunk);
       printf("Cooperation level:    %d\n", num_threads);
@@ -152,124 +353,28 @@ int main(int argc, const char* argv[])
 
   /** Kernel versions **/
   int res = 0;
-  unsigned long int elapsed;
+  unsigned long int elapsed, elapsed_total, elapsed_avg;
   struct timeval t_start, t_end, t_diff;
 
-  switch(kernel) {
-    /* Atomic add */
-  case AADD_NOSHARED_NOCHUNK_FULLCOOP: // 10
-    printf("Kernel: AADD_NOSHARED_NOCHUNK_FULLCOOP\n");
-    res = aadd_noShared_noChunk_fullCoop<IN_T>
-      (h_img, h_his, img_sz, his_sz, &t_start, &t_end,
-       PRINT_INFO);
-    break;
-  case AADD_NOSHARED_CHUNK_FULLCOOP: // 11
-    printf("Kernel: AADD_NOSHARED_CHUNK_FULLCOOP\n");
-    res = aadd_noShared_chunk_fullCoop<IN_T>
-      (h_img, h_his, img_sz, his_sz, num_threads,
-       &t_start, &t_end, PRINT_INFO);
-    break;
-  case AADD_NOSHARED_CHUNK_COOP: // 12
-    printf("Kernel: AADD_NOSHARED_CHUNK_COOP\n");
-    res = aadd_noShared_chunk_coop<IN_T>
-      (h_img, h_his, img_sz, his_sz,
-       num_threads, coop_lvl, num_hists,
-       &t_start, &t_end, PRINT_INFO);
-    break;
-  case AADD_SHARED_CHUNK_COOP: // 13
-    printf("Kernel: AADD_SHARED_CHUNK_COOP\n");
-    res = aadd_shared_chunk_coop<IN_T>
-      (h_img, h_his, img_sz, his_sz,
-       num_threads, coop_lvl, num_hists,
-       &t_start, &t_end, PRINT_INFO);
-    break;
+  printf("Kernel: %s\n", kernel_name(kernel));
+  elapsed_total = 0;
+  for (int i = 0; i < n_runs; i++) {
+    printf("Run %d:\n", i);
+    res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end);
 
-    /* Locking - CAS */
-  case ACAS_NOSHARED_NOCHUNK_FULLCOOP: // 20
-    printf("Kernel: ACAS_NOSHARED_NOCHUNK_FULLCOOP\n");
-    res = CAS_noShared_noChunk_fullCoop
-      <MY_OP, IN_T, OUT_T>
-      (h_img, h_his, img_sz, his_sz, &t_start, &t_end,
-       PRINT_INFO);
-    break;
-  case ACAS_NOSHARED_CHUNK_FULLCOOP: // 21
-    printf("Kernel: ACAS_NOSHARED_CHUNK_FULLCOOP\n");
-    res = CAS_noShared_chunk_fullCoop<MY_OP, IN_T, OUT_T>
-      (h_img, h_his, img_sz, his_sz, num_threads,
-       &t_start, &t_end, PRINT_INFO);
-    break;
-  case ACAS_NOSHARED_CHUNK_COOP: // 22
-    printf("Kernel: ACAS_NOSHARED_CHUNK_COOP\n");
-    res = CAS_noShared_chunk_coop<MY_OP, IN_T, OUT_T>
-      (h_img, h_his, img_sz, his_sz,
-       num_threads, coop_lvl, num_hists,
-       &t_start, &t_end, PRINT_INFO);
-    break;
-  case ACAS_SHARED_CHUNK_COOP: // 23
-    printf("Kernel: ACAS_SHARED_CHUNK_COOP\n");
-    res = CAS_shared_chunk_coop<MY_OP, IN_T, OUT_T>
-      (h_img, h_his, img_sz, his_sz,
-       num_threads, coop_lvl, num_hists,
-       &t_start, &t_end, PRINT_INFO);
-    break;
+    if(res != 0) {
+      free(h_img); free(h_his); free(h_seq);
+      return res;
+    }
 
-    /* Locking - Exch */
-  case AEXCH_NOSHARED_NOCHUNK_FULLCOOP: // 30
-    printf("Kernel: AEXCH_NOSHARED_NOCHUNK_FULLCOOP\n");
-    res = exch_noShared_noChunk_fullCoop<MY_OP, IN_T, OUT_T>
-      (h_img, h_his, img_sz, his_sz, &t_start, &t_end,
-       PRINT_INFO);
-    break;
-  case AEXCH_NOSHARED_CHUNK_FULLCOOP: // 31
-    printf("Kernel: AEXCH_NOSHARED_CHUNK_FULLCOOP\n");
-    res = exch_noShared_chunk_fullCoop<MY_OP, IN_T, OUT_T>
-      (h_img, h_his, img_sz, his_sz, num_threads, seq_chunk,
-       &t_start, &t_end, PRINT_INFO);
-    break;
-  case AEXCH_NOSHARED_CHUNK_COOP: // 32
-    printf("Kernel: AEXCH_NOSHARED_CHUNK_COOP\n");
-    res = exch_noShared_chunk_coop<MY_OP, IN_T, OUT_T>
-      (h_img, h_his, img_sz, his_sz,
-       num_threads, seq_chunk, coop_lvl, num_hists,
-       &t_start, &t_end, PRINT_INFO);
-    break;
-  case AEXCH_SHARED_CHUNK_COOP: // 33
-    printf("Kernel: AEXCH_SHARED_CHUNK_COOP\n");
-    res = exch_shared_chunk_coop<MY_OP, IN_T, OUT_T>
-      (h_img, h_his, img_sz, his_sz,
-       num_threads, seq_chunk, coop_lvl, num_hists,
-       &t_start, &t_end, PRINT_INFO);
-    break;
-  case SEQUENTIAL: // 00
-    printf("Sequential version (only)\n");
-    /* Timing */
-    unsigned long int seq_elapsed;
-    struct timeval seq_start, seq_end, seq_diff;
-
-    /* Execute sequential scatter */
-    scatter_seq<MY_OP, IN_T, OUT_T>
-      (h_img, h_seq, img_sz, his_sz, &seq_start, &seq_end);
-
-    /* Compute elapsed time */
-    timeval_subtract(&seq_diff, &seq_end, &seq_start);
-    seq_elapsed = seq_diff.tv_sec * 1e6 + seq_diff.tv_usec;
-
-    PRINT_RUNTIME(seq_elapsed);
-
-    /* free host memory */
-    free(h_img); free(h_his); free(h_seq);
-
-    return 0;
+    /* compute elapsed time for parallel version */
+    timeval_subtract(&t_diff, &t_end, &t_start);
+    elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+    PRINT_RUNTIME(elapsed);
+    printf("====\n");
+    elapsed_total += elapsed;
   }
-
-  if(res != 0) {
-    free(h_img); free(h_his); free(h_seq);
-    return res;
-  }
-
-  /* compute elapsed time for parallel version */
-  timeval_subtract(&t_diff, &t_end, &t_start);
-  elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+  elapsed_avg = elapsed_total / n_runs;
 
   /* execute sequential scatter */
   unsigned long int seq_elapsed;
@@ -282,10 +387,10 @@ int main(int argc, const char* argv[])
   timeval_subtract(&seq_diff, &seq_end, &seq_start);
   seq_elapsed = seq_diff.tv_sec * 1e6 + seq_diff.tv_usec;
 
-  /* validate */
+  /* validate the last result */
+  PRINT_RUNTIME(elapsed_avg);
   int valid = validate_array<OUT_T>(h_his, h_seq, his_sz);
-  if(valid) { PRINT_RUNTIME(elapsed); }
-  else      { printf("ERROR: Invalid!\n"); res = -1; }
+  if(!valid) { printf("ERROR: Invalid!\n"); res = -1; }
 
   if(!valid && PRINT_INVALIDS) {
     print_invalid_indices<MY_OP, OUT_T>(h_his, h_seq, his_sz);
