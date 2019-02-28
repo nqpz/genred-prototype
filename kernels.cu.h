@@ -1933,7 +1933,6 @@ exch_shared_chunk_coop_shlock_kernel(IN_T  *d_img,
   // initialize local histograms and locks
   volatile extern __shared__ int sh_mem[];
   volatile OUT_T *sh_his = sh_mem;
-  volatile int *sh_lck = sh_mem; // the same memory
 
   for(int i=tid; i<his_block_sz; i+=blockDim.x) {
     sh_his[i] = OP::identity();
@@ -1961,10 +1960,10 @@ exch_shared_chunk_coop_shlock_kernel(IN_T  *d_img,
         // the thread id (representable in a few bits, but here just stored as
         // an int) does not take up more space than an OUT_T element.
         __syncwarp();
-        sh_lck[lhidx + idx] = tid;
+        sh_his[lhidx + idx] = (OUT_T) tid;
         __syncwarp();
         // Check if this thread won the write.
-        if( sh_lck[lhidx + idx] == tid ) {
+        if( (int) sh_his[lhidx + idx] == tid ) {
           sh_his[lhidx + idx] =
             OP::apply(saved_val, val);
           done = 1;
