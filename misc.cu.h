@@ -60,7 +60,7 @@ int validate_input(int argc, const char* argv[],
   if(!(argc == 5 || argc == 6)) {
     printf("Usage: "
            "%s <kernel> <coop. level> <histo. size> "
-           "<filename> [<n runs>=1]\n",
+           "<filename> [<n runs>=10]\n",
            argv[0]);
     return 1;
   }
@@ -86,7 +86,7 @@ int validate_input(int argc, const char* argv[],
     }
     assert(*n_runs > 0);
   } else {
-    *n_runs = 1;
+    *n_runs = 10;
   }
 
   return 0;
