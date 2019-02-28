@@ -84,7 +84,7 @@ int validate_input(int argc, const char* argv[],
     if( sscanf(argv[5], "%i", n_runs ) != 1) {
       printf("Error: Failed to parse number of runs\n");
     }
-    assert(n_runs > 0);
+    assert(*n_runs > 0);
   } else {
     *n_runs = 1;
   }
