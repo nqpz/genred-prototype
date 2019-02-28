@@ -62,7 +62,7 @@ for k in vary_coop_kernels:
                 print '{0} {1} {2} {3} {4}'.format(
                     pgm_path, k, clvl, his_sz, filename
                 )
-                cmd  = [pgm_path, k, clvl, his_sz, filename]
+                cmd  = [pgm_path, k, clvl, his_sz, filename, str(iterations)]
                 try:
                     out  = check_output(cmd)
                     t0 = findall("\d+.\d+", out)
@@ -85,7 +85,7 @@ for k in fullcoop_kernels:
             print '{0} {1} {2} {3} {4}'.format(
                 pgm_path, k, clvl, his_sz, filename
             )
-            cmd  = [pgm_path, k, clvl, his_sz, filename]
+            cmd  = [pgm_path, k, clvl, his_sz, filename, str(iterations)]
             try:
                 out  = check_output(cmd)
                 t0 = findall("\d+.\d+", out)
@@ -107,7 +107,7 @@ with open(out_file, 'wb') as myfile:
     for _ in range(iterations):
         print '{0} {1} {2} {3} {4}'.format(
             pgm_path, 'Sequential version', 0, his_sz, filename)
-        cmd  = [pgm_path, '00', '0', his_sz, filename]
+        cmd  = [pgm_path, '00', '0', his_sz, filename, str(iterations)]
         try:
             out  = check_output(cmd)
             t0 = findall("\d+.\d+", out)
