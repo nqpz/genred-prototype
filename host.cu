@@ -38,7 +38,6 @@
 // debugging
 #define PRINT_INFO     1
 #define PRINT_INVALIDS 1
-#define PRINT_SEQ_TIME 0
 
 // runtime
 #define MICROS 1 // 0 will give runtime in millisecs.
@@ -368,13 +367,29 @@ int main(int argc, const char* argv[])
 
   printf("Kernel: %s\n", kernel_name(kernel));
   elapsed_total = 0;
-  for (int i = -1; i < n_runs; i++) {
+  int n_warmup_runs = 1;
+  for (int i = -n_warmup_runs; i < n_runs; i++) {
     if (i < 0) {
       puts("Warmup run.");
       res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end);
       if(res != 0) {
         free(h_img); free(h_his); free(h_seq);
         return res;
+      }
+      if (i == -n_warmup_runs) {
+        /* execute sequential scatter */
+        struct timeval seq_start, seq_end;
+        scatter_seq<MY_OP, IN_T, OUT_T>
+          (h_img, h_seq, img_sz, his_sz, &seq_start, &seq_end);
+
+        /* validate the result */
+        int valid = validate_array<OUT_T>(h_his, h_seq, his_sz);
+        if(!valid) { printf("ERROR: Invalid!\n"); res = -1; }
+
+        if(!valid && PRINT_INVALIDS) {
+          print_invalid_indices<MY_OP, OUT_T>(h_his, h_seq, his_sz);
+          return 1;
+        }
       }
     } else {
       printf("Run %d:\n", i);
@@ -394,28 +409,7 @@ int main(int argc, const char* argv[])
     }
   }
   elapsed_avg = elapsed_total / n_runs;
-
-  /* execute sequential scatter */
-  unsigned long int seq_elapsed;
-  struct timeval seq_start, seq_end, seq_diff;
-
-  scatter_seq<MY_OP, IN_T, OUT_T>
-    (h_img, h_seq, img_sz, his_sz, &seq_start, &seq_end);
-
-  /* compute elapsed time for sequential version */
-  timeval_subtract(&seq_diff, &seq_end, &seq_start);
-  seq_elapsed = seq_diff.tv_sec * 1e6 + seq_diff.tv_usec;
-
-  /* validate the last result */
   PRINT_RUNTIME(elapsed_avg);
-  int valid = validate_array<OUT_T>(h_his, h_seq, his_sz);
-  if(!valid) { printf("ERROR: Invalid!\n"); res = -1; }
-
-  if(!valid && PRINT_INVALIDS) {
-    print_invalid_indices<MY_OP, OUT_T>(h_his, h_seq, his_sz);
-  }
-
-  if(PRINT_SEQ_TIME) { PRINT_RUNTIME(seq_elapsed); }
 
   /* free host memory */
   free(h_img); free(h_his); free(h_seq);
