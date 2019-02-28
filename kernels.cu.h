@@ -1960,7 +1960,9 @@ exch_shared_chunk_coop_shlock_kernel(IN_T  *d_img,
         // Temporarily use the histogram as a lock.  This write only works if
         // the thread id (representable in a few bits, but here just stored as
         // an int) does not take up more space than an OUT_T element.
+        __syncwarp();
         sh_lck[lhidx + idx] = tid;
+        __syncwarp();
         // Check if this thread won the write.
         if( sh_lck[lhidx + idx] == tid ) {
           sh_his[lhidx + idx] =
