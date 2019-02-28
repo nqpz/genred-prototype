@@ -32,7 +32,8 @@
 #define AEXCH_NOSHARED_CHUNK_COOP       32
 #define AEXCH_SHARED_CHUNK_COOP         33
 #define AEXCH_SHARED_CHUNK_COOP_WARP    34
-#define AEXCH_SHARED_CHUNK_COOP_SHLOCK  35
+#define AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH  35
+#define AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC 36
 
 // debugging
 #define PRINT_INFO     1
@@ -102,8 +103,11 @@ const char* kernel_name(int kernel) {
   case AEXCH_SHARED_CHUNK_COOP_WARP:
     name = "AEXCH_SHARED_CHUNK_COOP_WARP";
     break;
-  case AEXCH_SHARED_CHUNK_COOP_SHLOCK:
-    name = "AEXCH_SHARED_CHUNK_COOP_SHLOCK";
+  case AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH:
+    name = "AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH";
+    break;
+  case AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC:
+    name = "AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC";
     break;
   case SEQUENTIAL:
     name = "SEQUENTIAL";
@@ -219,8 +223,14 @@ int kernel_run(int kernel,
        num_threads, seq_chunk, coop_lvl, num_hists,
        t_start, t_end, PRINT_INFO);
     break;
-  case AEXCH_SHARED_CHUNK_COOP_SHLOCK:
-    res = exch_shared_chunk_coop_shlock<MY_OP, IN_T, OUT_T>
+  case AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH:
+    res = exch_shared_chunk_coop_shlock_exch<MY_OP, IN_T, OUT_T>
+      (h_img, h_his, img_sz, his_sz,
+       num_threads, seq_chunk, coop_lvl, num_hists,
+       t_start, t_end, PRINT_INFO);
+    break;
+  case AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC:
+    res = exch_shared_chunk_coop_shlock_adhoc<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, seq_chunk, coop_lvl, num_hists,
        t_start, t_end, PRINT_INFO);

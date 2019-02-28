@@ -1910,18 +1910,18 @@ exch_shared_chunk_coop_warp(IN_T  *h_img,
 /* -- KERNEL ID: 34 -- */
 
 /* -- KERNEL ID: 35 -- */
-/* Manual lock in shared memory - Exch. in shared memory - coop. in shared mem. */
+/* Manual lock in shared memory - Exch. in same shared memory as histogram - coop. in shared mem. */
 template<class OP, class IN_T, class OUT_T>
 __global__ void
-exch_shared_chunk_coop_shlock_kernel(IN_T  *d_img,
-                                     OUT_T *d_his,
-                                     int img_sz,
-                                     int his_sz,
-                                     int num_threads,
-                                     int seq_chunk,
-                                     int coop_lvl,
-                                     int num_hists,
-                                     int hists_per_block)
+exch_shared_chunk_coop_shlock_exch_kernel(IN_T  *d_img,
+                                          OUT_T *d_his,
+                                          int img_sz,
+                                          int his_sz,
+                                          int num_threads,
+                                          int seq_chunk,
+                                          int coop_lvl,
+                                          int num_hists,
+                                          int hists_per_block)
 {
   // global thread id
   const unsigned int tid = threadIdx.x;
@@ -1960,10 +1960,10 @@ exch_shared_chunk_coop_shlock_kernel(IN_T  *d_img,
         // the thread id (representable in a few bits, but here just stored as
         // an int) does not take up more space than an OUT_T element.
         __syncwarp();
-        sh_his[lhidx + idx] = (OUT_T) tid;
+        sh_his[lhidx + idx] = (OUT_T) 0;
         __syncwarp();
         // Check if this thread won the write.
-        if( (int) sh_his[lhidx + idx] == tid ) {
+        if( atomicExch((int *)&sh_his[lhidx + idx], 1) == 0 ) {
           sh_his[lhidx + idx] =
             OP::apply(saved_val, val);
           done = 1;
@@ -1981,17 +1981,17 @@ exch_shared_chunk_coop_shlock_kernel(IN_T  *d_img,
 
 template<class OP, class IN_T, class OUT_T>
 int
-exch_shared_chunk_coop_shlock(IN_T  *h_img,
-                              OUT_T *h_his,
-                              int img_sz,
-                              int his_sz,
-                              int num_threads,
-                              int seq_chunk,
-                              int coop_lvl,
-                              int num_hists,
-                              struct timeval *t_start,
-                              struct timeval *t_end,
-                              int PRINT_INFO)
+exch_shared_chunk_coop_shlock_exch(IN_T  *h_img,
+                                   OUT_T *h_his,
+                                   int img_sz,
+                                   int his_sz,
+                                   int num_threads,
+                                   int seq_chunk,
+                                   int coop_lvl,
+                                   int num_hists,
+                                   struct timeval *t_start,
+                                   struct timeval *t_end,
+                                   int PRINT_INFO)
 {
   if(coop_lvl > BLOCK_SZ) {
     printf("Error: cooporation level cannot exceed block size\n");
@@ -2059,7 +2059,7 @@ exch_shared_chunk_coop_shlock(IN_T  *h_img,
   // execute kernel
   gettimeofday(t_start, NULL);
 
-  exch_shared_chunk_coop_shlock_kernel<OP, IN_T, OUT_T>
+  exch_shared_chunk_coop_shlock_exch_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst,
     his_mem_sz * hists_per_block>>>
     (d_img, d_his, img_sz, his_sz,
@@ -2087,5 +2087,183 @@ exch_shared_chunk_coop_shlock(IN_T  *h_img,
 }
 /* -- KERNEL ID: 35 -- */
 
+
+/* -- KERNEL ID: 36 -- */
+/* Manual lock in shared memory - ad-hoc lock in same shared memory as histogram - coop. in shared mem. */
+template<class OP, class IN_T, class OUT_T>
+__global__ void
+exch_shared_chunk_coop_shlock_adhoc_kernel(IN_T  *d_img,
+                                           OUT_T *d_his,
+                                           int img_sz,
+                                           int his_sz,
+                                           int num_threads,
+                                           int seq_chunk,
+                                           int coop_lvl,
+                                           int num_hists,
+                                           int hists_per_block)
+{
+  // global thread id
+  const unsigned int tid = threadIdx.x;
+  const unsigned int gid = blockIdx.x * blockDim.x + tid;
+  int lhidx = (tid / coop_lvl) * his_sz;
+  int ghidx = blockIdx.x * hists_per_block * his_sz;
+  int his_block_sz = hists_per_block * his_sz;
+
+  // initialize local histograms and locks
+  volatile extern __shared__ int sh_mem[];
+  volatile OUT_T *sh_his = sh_mem;
+
+  for(int i=tid; i<his_block_sz; i+=blockDim.x) {
+    sh_his[i] = OP::identity();
+  }
+  __syncthreads();
+
+  // scatter
+  if(gid < num_threads) {
+    int done, idx; OUT_T val;
+    for(int i=0; i<seq_chunk; i++) {
+      if(gid + i * num_threads < img_sz) {
+        struct indval<OUT_T> iv;
+        done = 0;
+        iv = f<OUT_T>(d_img[gid + i * num_threads], his_sz);
+        idx = iv.index;
+        val = iv.value;
+      } else {
+        done = 1;
+      }
+
+      while(!done) {
+        // Save the value at the histogram index in register memory.
+        OUT_T saved_val = sh_his[lhidx + idx];
+        // Temporarily use the histogram as a lock.  This write only works if
+        // the thread id (representable in a few bits, but here just stored as
+        // an int) does not take up more space than an OUT_T element.
+        __syncwarp();
+        sh_his[lhidx + idx] = (OUT_T) tid;
+        __syncwarp();
+        // Check if this thread won the write.
+        if( (int) sh_his[lhidx + idx] == tid ) {
+          sh_his[lhidx + idx] =
+            OP::apply(saved_val, val);
+          done = 1;
+        }
+      }
+    }
+  }
+  __syncthreads();
+
+  // copy to global memory
+  for(int i=tid; i<his_block_sz; i+=blockDim.x) {
+    d_his[ghidx + i] = sh_his[i];
+  }
+}
+
+template<class OP, class IN_T, class OUT_T>
+int
+exch_shared_chunk_coop_shlock_adhoc(IN_T  *h_img,
+                                    OUT_T *h_his,
+                                    int img_sz,
+                                    int his_sz,
+                                    int num_threads,
+                                    int seq_chunk,
+                                    int coop_lvl,
+                                    int num_hists,
+                                    struct timeval *t_start,
+                                    struct timeval *t_end,
+                                    int PRINT_INFO)
+{
+  if(coop_lvl > BLOCK_SZ) {
+    printf("Error: cooporation level cannot exceed block size\n");
+    return -1;
+  }
+
+  // allocate device memory
+  unsigned int img_mem_sz = img_sz * sizeof(IN_T);
+  unsigned int his_mem_sz = his_sz * sizeof(OUT_T);
+
+  // histograms per block - maximum value is 1024
+  int hists_per_block = min(
+                            (SH_MEM_SZ / his_mem_sz),
+                            (BLOCK_SZ / coop_lvl)
+                            );
+  int thrds_per_block = hists_per_block * coop_lvl;
+  int num_blocks = ceil(num_hists / (float)hists_per_block);
+
+  // A histogram must not be shared among warps.  We depend on lock-step
+  // execution.
+  assert(hists_per_block >= BLOCK_SZ / WARP_SZ && WARP_SZ % his_sz == 0);
+  // We must be able to use each histogram entry as a thread id storage as well.
+  assert(sizeof(int) <= sizeof(OUT_T)); // XXX: A thread id can be stored in
+                                        // fewer bits than an entire int if we
+                                        // need it to.
+
+  if(PRINT_INFO) {
+    printf("Histograms per block: %d\n", hists_per_block);
+    printf("Threads per block: %d\n", thrds_per_block);
+    printf("Number of blocks: %d\n", num_blocks);
+    printf("====\n");
+  }
+
+  if(hists_per_block * his_mem_sz > SH_MEM_SZ) {
+    printf("Error: Histograms exceed "
+           "shared memory size\n");
+    return -1;
+  }
+
+  // d_his contains all histograms from shared memory
+  IN_T *d_img; OUT_T *d_his, *d_res;
+  cudaMalloc((void **)&d_img, img_mem_sz);
+  cudaMalloc((void **)&d_res, his_mem_sz);
+  cudaMalloc((void **)&d_his,
+             his_mem_sz * num_blocks * hists_per_block);
+  cudaMemcpy(d_img, h_img, img_mem_sz, cudaMemcpyHostToDevice);
+  cudaMemcpy(d_res, h_his, his_mem_sz, cudaMemcpyHostToDevice);
+
+  // compute grid and block dimensions
+  // first kernel
+  dim3 grid_dim_fst (num_blocks, 1, 1);
+  dim3 block_dim_fst(thrds_per_block, 1, 1);
+  // second kernel
+  dim3 grid_dim_snd (GRID_X_DIM (his_sz), 1, 1);
+  dim3 block_dim_snd(BLOCK_X_DIM(his_sz), 1, 1);
+
+  if(PRINT_INFO) {
+    printf("First - grid: %d\n", grid_dim_fst.x);
+    printf("First - block: %d\n", block_dim_fst.x);
+    printf("Second - grid: %d\n", grid_dim_snd.x);
+    printf("Second - block: %d\n", block_dim_snd.x);
+    printf("====\n");
+  }
+
+  // execute kernel
+  gettimeofday(t_start, NULL);
+
+  exch_shared_chunk_coop_shlock_adhoc_kernel<OP, IN_T, OUT_T>
+    <<<grid_dim_fst, block_dim_fst,
+    his_mem_sz * hists_per_block>>>
+    (d_img, d_his, img_sz, his_sz,
+     num_threads, seq_chunk, coop_lvl, num_hists, hists_per_block);
+
+  cudaThreadSynchronize();
+
+  gettimeofday(t_end, NULL); // do not time reduction
+
+  reduce_kernel<OP, OUT_T>
+    <<<grid_dim_snd, block_dim_snd>>>
+    (d_his, d_res, img_sz, his_sz, num_blocks * hists_per_block);
+
+  cudaThreadSynchronize();
+
+  int res = gpuAssert( cudaPeekAtLastError() );
+
+  // copy result from device to host memory
+  cudaMemcpy(h_his, d_res, his_mem_sz, cudaMemcpyDeviceToHost);
+
+  // free memory
+  cudaFree(d_img); cudaFree(d_his); cudaFree(d_res);
+
+  return res;
+}
+/* -- KERNEL ID: 36 -- */
 
 #endif // SCATTER_KER
