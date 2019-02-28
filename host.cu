@@ -358,21 +358,30 @@ int main(int argc, const char* argv[])
 
   printf("Kernel: %s\n", kernel_name(kernel));
   elapsed_total = 0;
-  for (int i = 0; i < n_runs; i++) {
-    printf("Run %d:\n", i);
-    res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end);
+  for (int i = -1; i < n_runs; i++) {
+    if (i < 0) {
+      puts("Warmup run.");
+      res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end);
+      if(res != 0) {
+        free(h_img); free(h_his); free(h_seq);
+        return res;
+      }
+    } else {
+      printf("Run %d:\n", i);
+      res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end);
 
-    if(res != 0) {
-      free(h_img); free(h_his); free(h_seq);
-      return res;
+      if(res != 0) {
+        free(h_img); free(h_his); free(h_seq);
+        return res;
+      }
+
+      /* compute elapsed time for parallel version */
+      timeval_subtract(&t_diff, &t_end, &t_start);
+      elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+      PRINT_RUNTIME(elapsed);
+      printf("====\n");
+      elapsed_total += elapsed;
     }
-
-    /* compute elapsed time for parallel version */
-    timeval_subtract(&t_diff, &t_end, &t_start);
-    elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
-    PRINT_RUNTIME(elapsed);
-    printf("====\n");
-    elapsed_total += elapsed;
   }
   elapsed_avg = elapsed_total / n_runs;
 
