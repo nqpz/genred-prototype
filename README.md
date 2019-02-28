@@ -37,7 +37,7 @@ it will show which arguments it takes:
 
 ```
 # ./host
-Usage: ./host <kernel> <coop. level> <histo. size> <filename> [<n runs>=10]
+Usage: ./host <kernel> <coop. level> <histo. size> <filename> [<n runs>=10 [<print info=1>]]
 ```
 
 That is, it takes:

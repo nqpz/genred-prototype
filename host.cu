@@ -35,9 +35,6 @@
 #define AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH  35
 #define AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC 36
 
-// debugging
-#define PRINT_INFO     1
-#define PRINT_INVALIDS 1
 
 // runtime
 #define MICROS 1 // 0 will give runtime in millisecs.
@@ -129,37 +126,38 @@ int kernel_run(int kernel,
                int coop_lvl,
                int num_hists,
                struct timeval *t_start,
-               struct timeval *t_end) {
+               struct timeval *t_end,
+               int print_info) {
   int res;
   switch(kernel) {
     /* Atomic add */
   case AADD_NOSHARED_NOCHUNK_FULLCOOP:
     res = aadd_noShared_noChunk_fullCoop<IN_T>
       (h_img, h_his, img_sz, his_sz, t_start, t_end,
-       PRINT_INFO);
+       print_info);
     break;
   case AADD_NOSHARED_CHUNK_FULLCOOP:
     res = aadd_noShared_chunk_fullCoop<IN_T>
       (h_img, h_his, img_sz, his_sz, num_threads,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case AADD_NOSHARED_CHUNK_COOP:
     res = aadd_noShared_chunk_coop<IN_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case AADD_SHARED_CHUNK_COOP:
     res = aadd_shared_chunk_coop<IN_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case AADD_SHARED_CHUNK_COOP_WARP:
     res = aadd_shared_chunk_coop_warp<IN_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
 
     /* Locking - CAS */
@@ -167,72 +165,72 @@ int kernel_run(int kernel,
     res = CAS_noShared_noChunk_fullCoop
       <MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz, t_start, t_end,
-       PRINT_INFO);
+       print_info);
     break;
   case ACAS_NOSHARED_CHUNK_FULLCOOP:
     res = CAS_noShared_chunk_fullCoop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz, num_threads,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case ACAS_NOSHARED_CHUNK_COOP:
     res = CAS_noShared_chunk_coop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case ACAS_SHARED_CHUNK_COOP:
     res = CAS_shared_chunk_coop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case ACAS_SHARED_CHUNK_COOP_WARP:
     res = CAS_shared_chunk_coop_warp<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
 
     /* Locking - Exch */
   case AEXCH_NOSHARED_NOCHUNK_FULLCOOP:
     res = exch_noShared_noChunk_fullCoop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz, t_start, t_end,
-       PRINT_INFO);
+       print_info);
     break;
   case AEXCH_NOSHARED_CHUNK_FULLCOOP:
     res = exch_noShared_chunk_fullCoop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz, num_threads, seq_chunk,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case AEXCH_NOSHARED_CHUNK_COOP:
     res = exch_noShared_chunk_coop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, seq_chunk, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case AEXCH_SHARED_CHUNK_COOP:
     res = exch_shared_chunk_coop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, seq_chunk, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case AEXCH_SHARED_CHUNK_COOP_WARP:
     res = exch_shared_chunk_coop_warp<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, seq_chunk, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH:
     res = exch_shared_chunk_coop_shlock_exch<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, seq_chunk, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC:
     res = exch_shared_chunk_coop_shlock_adhoc<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, seq_chunk, coop_lvl, num_hists,
-       t_start, t_end, PRINT_INFO);
+       t_start, t_end, print_info);
     break;
   case SEQUENTIAL:
     scatter_seq<MY_OP, IN_T, OUT_T>
@@ -249,9 +247,9 @@ int kernel_run(int kernel,
 int main(int argc, const char* argv[])
 {
   /* validate and parse cmd-line arguments */
-  int his_sz, kernel, coop_lvl_tmp, n_runs;
+  int his_sz, kernel, coop_lvl_tmp, n_runs, print_info;
   if(validate_input(argc, argv,
-                    &his_sz, &kernel, &coop_lvl_tmp, &n_runs) != 0) {
+                    &his_sz, &kernel, &coop_lvl_tmp, &n_runs, &print_info) != 0) {
     return -1;
   }
 
@@ -335,7 +333,7 @@ int main(int argc, const char* argv[])
   }
   int num_hists   = NUM_HISTOS(num_threads, coop_lvl);
 
-  if(PRINT_INFO) {
+  if(print_info) {
     printf("== Heuristic formulas ==\n");
     if(kernel == AADD_NOSHARED_NOCHUNK_FULLCOOP ||
        kernel == ACAS_NOSHARED_NOCHUNK_FULLCOOP ||
@@ -365,13 +363,16 @@ int main(int argc, const char* argv[])
   unsigned long int elapsed, elapsed_total, elapsed_avg;
   struct timeval t_start, t_end, t_diff;
 
-  printf("Kernel: %s\n", kernel_name(kernel));
+  if (print_info) {
+    printf("Kernel: %s\n", kernel_name(kernel));
+    printf("Number of runs: %d\n", n_runs);
+  }
   elapsed_total = 0;
   int n_warmup_runs = 1;
   for (int i = -n_warmup_runs; i < n_runs; i++) {
     if (i < 0) {
-      puts("Warmup run.");
-      res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end);
+      if (print_info) { puts("Warmup run."); }
+      res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end, print_info);
       if(res != 0) {
         free(h_img); free(h_his); free(h_seq);
         return res;
@@ -384,16 +385,16 @@ int main(int argc, const char* argv[])
 
         /* validate the result */
         int valid = validate_array<OUT_T>(h_his, h_seq, his_sz);
-        if(!valid) { printf("ERROR: Invalid!\n"); res = -1; }
-
-        if(!valid && PRINT_INVALIDS) {
+        if(!valid) {
+          printf("ERROR: Invalid!\n");
+          res = -1;
           print_invalid_indices<MY_OP, OUT_T>(h_his, h_seq, his_sz);
           return 1;
         }
       }
     } else {
-      printf("Run %d:\n", i);
-      res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end);
+      if (print_info) { printf("Run %d:\n", i); }
+      res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end, print_info);
 
       if(res != 0) {
         free(h_img); free(h_his); free(h_seq);
@@ -403,8 +404,10 @@ int main(int argc, const char* argv[])
       /* compute elapsed time for parallel version */
       timeval_subtract(&t_diff, &t_end, &t_start);
       elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
-      PRINT_RUNTIME(elapsed);
-      printf("====\n");
+      if (print_info) {
+        PRINT_RUNTIME(elapsed);
+        printf("====\n");
+      }
       elapsed_total += elapsed;
     }
   }

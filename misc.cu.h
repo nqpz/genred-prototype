@@ -54,13 +54,13 @@ int timeval_subtract(struct timeval* result,
 
 /* Validate input */
 int validate_input(int argc, const char* argv[],
-                   int *his_sz, int *kernel, int *coop_lvl, int *n_runs)
+                   int *his_sz, int *kernel, int *coop_lvl, int *n_runs, int *print_info)
 {
   /* check number of arguments */
-  if(!(argc == 5 || argc == 6)) {
+  if(!(argc == 5 || argc == 6 || argc == 7)) {
     printf("Usage: "
            "%s <kernel> <coop. level> <histo. size> "
-           "<filename> [<n runs>=10]\n",
+           "<filename> [<n runs>=10 [<print info=1>]]\n",
            argv[0]);
     return 1;
   }
@@ -87,6 +87,14 @@ int validate_input(int argc, const char* argv[],
     assert(*n_runs > 0);
   } else {
     *n_runs = 10;
+  }
+  if (argc == 7) {
+    if( sscanf(argv[6], "%i", print_info ) != 1) {
+      printf("Error: Failed to parse whether to print info (specify 0 or 1)\n");
+    }
+    assert(*print_info == 0 || *print_info == 1);
+  } else {
+    *print_info = 1;
   }
 
   return 0;
