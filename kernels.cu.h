@@ -561,7 +561,6 @@ int aadd_shared_chunk_coop_warp(T *h_img,
                             (SH_MEM_SZ / his_mem_sz),
                             (BLOCK_SZ / coop_lvl)
                             );
-  //assert(hists_per_block >= WARP_SZ); // XXX
   int thrds_per_block = hists_per_block * coop_lvl;
   int num_blocks = ceil(num_hists / (float)hists_per_block);
 
@@ -1240,8 +1239,6 @@ exch_noShared_noChunk_fullCoop_kernel(IN_T  *d_img,
   while(!done) {
     if(atomicExch((int *)&locks[idx], 1) == 0) {
       d_his[idx] = OP::apply(d_his[idx], val);
-      //__threadfence();
-      //atomicExch((int *)&locks[idx], 0);
       locks[idx] = 0;
       done = 1;
     }
@@ -1355,8 +1352,6 @@ exch_noShared_chunk_fullCoop_kernel(OUT_T *d_img,
       while(!done) {
         if( atomicExch((int *)&d_locks[idx], 1) == 0 ) {
           d_his[idx] = OP::apply(d_his[idx], val);
-          //__threadfence();
-          //atomicExch((int *)&d_locks[idx], 0);
           d_locks[idx] = 0;
           done = 1;
         }
@@ -1473,8 +1468,6 @@ exch_noShared_chunk_coop_kernel(IN_T  *d_img,
         if( atomicExch((int *)&d_locks[ghidx + idx], 1) == 0 ) {
           d_his[ghidx + idx] =
             OP::apply(d_his[ghidx + idx], val);
-          //__threadfence(); // necessary if not atomicExch
-          //atomicExch((int *)&d_locks[ghidx + idx], 0);
           d_locks[ghidx + idx] = 0;
           done = 1;
         }
@@ -1632,13 +1625,9 @@ exch_shared_chunk_coop_kernel(IN_T  *d_img,
         if( atomicExch((int *)&sh_lck[lhidx + idx], 1) == 0 ) {
           sh_his[lhidx + idx] =
             OP::apply(sh_his[lhidx + idx], val);
-          //__threadfence();
           atomicExch((int *)&sh_lck[lhidx + idx], 0);
-          //sh_lck[lhidx + idx] = 0;
           done = 1;
         }
-        //__threadfence(); // this stalls (threadfence_block
-        //doesn't help)
       }
     }
   }
@@ -1975,7 +1964,6 @@ exch_shared_chunk_coop_shlock_kernel(IN_T  *d_img,
         if( (int) sh_his[lhidx + idx] == tid ) {
           sh_his[lhidx + idx] =
             OP::apply(saved_val, val);
-          //          __threadfence();
           done = 1;
         }
       }
