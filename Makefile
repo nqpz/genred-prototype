@@ -18,6 +18,7 @@ FC=futhark $(FB)
 # For experiment
 DATA_PATH=data/cuda
 RUNT_PATH=runtimes
+PDF_PATH=pdf
 DATA_SIZE=10000000
 ITERATIONS=5
 COOP_LEVELS=1 4 16 32 64 256 1024 4096 16384 61440 # last is max threads
@@ -27,39 +28,42 @@ HISTO_SIZES=16 32 64 256 1024 4096 16384 61440
 
 .PRECIOUS: $(RUNT_PATH)/hist-%.json hist-%-full.json $(DATA_PATH)/%-$(DATA_SIZE).dat $(DATA_PATH)/futhark/%
 
-all:	$(CU_FILE)
+all: $(CU_FILE)
 
 # Compile CUDA prototype
 $(CU_FILE): $(CU_FILE).cu $(REQS)
 	$(NVCC) $(NVCC_FLAGS) $(C_FLAGS) $< -o $@ $(LIBS)
 
 # Compile Futhark reduction program
-$(FUT_FILE):	$(FUT_FILE).fut
+$(FUT_FILE): $(FUT_FILE).fut
 	$(FC) $<
 
 # Run experiment
-plot: $(HISTO_SIZES:%=hist-%.pdf) $(HISTO_SIZES:%=hist-%-full.pdf)
-
-# Generate CUDA data (Futhark data should be created manually!)
-$(DATA_PATH)/%-$(DATA_SIZE).dat:
-	@echo '=== Generating data'
-	python generate_image.py $* $(DATA_SIZE)
+plot: $(HISTO_SIZES:%=$(PDF_PATH)/hist-%.pdf) $(HISTO_SIZES:%=$(PDF_PATH)/hist-%-full.pdf)
 
 # Support generating data on its own.
 dat: $(HISTO_SIZES:%=$(DATA_PATH)/%-$(DATA_SIZE).dat)
 
+$(DATA_PATH) $(RUNT_PATH) $(PDF_PATH):
+	mkdir -p $@
+
+# Generate CUDA data (Futhark data should be created manually!)
+$(DATA_PATH)/%-$(DATA_SIZE).dat: $(DATA_PATH)
+	@echo '=== Generating data'
+	python generate_image.py $* $(DATA_SIZE)
+
 # Run actual programs
-$(RUNT_PATH)/hist-%.json: $(CU_FILE) $(DATA_PATH)/%-$(DATA_SIZE).dat
+$(RUNT_PATH)/hist-%.json: $(RUNT_PATH) $(CU_FILE) $(DATA_PATH)/%-$(DATA_SIZE).dat
 	@echo '=== Running CUDA experiment'
 	python experiment.py $(ITERATIONS) $* \
-		$(DATA_PATH)/$*-$(DATA_SIZE).dat $(COOP_LEVELS)
+	  $(DATA_PATH)/$*-$(DATA_SIZE).dat $(COOP_LEVELS)
 
-$(RUNT_PATH)/fut_times.json: $(FUT_FILE).fut
+$(RUNT_PATH)/fut_times.json: $(RUNT_PATH) $(FUT_FILE).fut
 	@echo '=== Running Futhark experiment'
 	futhark bench --runs=$(ITERATIONS) --backend=$(FB) --json $@ $<
 
 # Create graphs
-hist-%.pdf hist-%-full.pdf: $(RUNT_PATH)/hist-%.json $(RUNT_PATH)/fut_times.json
+$(PDF_PATH)/hist-%.pdf $(PDF_PATH)/hist-%-full.pdf: $(PDF_PATH) $(RUNT_PATH)/hist-%.json $(RUNT_PATH)/fut_times.json
 	@echo '=== Generating graphs'
 	python plot.py $* $(DATA_SIZE) $(COOP_LEVELS)
 
@@ -70,10 +74,10 @@ clean_data:
 #rm -f $(DATA_PATH)/* # you probably don't want to do this
 
 clean_pdfs:
-	rm -f hist-*.pdf hist-*-full.pdf
+	rm -f $(PDF_PATH)/*
 
 clean_bins:
 	rm -f $(CU_FILE)
 	rm -f $(FUT_FILE) $(FUT_FILE).c
 
-clean_all:	clean_runtimes clean_data clean_pdfs clean_bins
+clean_all: clean_runtimes clean_data clean_pdfs clean_bins

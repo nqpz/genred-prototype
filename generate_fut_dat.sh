@@ -10,6 +10,8 @@
 
 DATA_PATH=data/futhark
 
+mkdir -p $DATA_PATH
+
 for i in 16 64 256 1024 4096 16384 61440; do
     for j in 1 4 15 60 240 959 3835 15338 61350; do
         if [[  ($i == 16384 && $j == 61350) ||

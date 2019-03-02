@@ -91,13 +91,6 @@ phase, where intermediate histograms are combined.
 
 ## Generating data
 
-Before creating any data you should create the `data/cuda`
-and `data/futhark` directories. If you are in the project
-root directory then type `mkdir -p
-data/{cuda,futhark}`. Note, that generating Futhark data
-takes like forever - you can safely go get some coffee.
-
-
 ### CUDA data
 
 If you want to test the CUDA prototypes on a single data set
