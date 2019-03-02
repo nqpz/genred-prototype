@@ -19,8 +19,13 @@ for i in 16 64 256 1024 4096 16384 61440; do
            ]]; then
             continue
         fi
-        printf "Generating %d-%d\n" $j $i
-        futhark dataset --binary --i32-bounds=0:$i \
-                        -g [$j][$i]i32 > $DATA_PATH/$i-$j
+        out="$DATA_PATH/$i-$j.dat"
+        echo "Generating $out"
+        if [ -f "$out" ]; then
+            echo "$out already exists; not generating anew."
+        else
+            futhark dataset --binary --i32-bounds=0:$i \
+                    -g [$j][$i]i32 > "$out"
+        fi
     done
 done

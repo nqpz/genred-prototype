@@ -78,9 +78,9 @@ the optimal one.)
 4. `<filename>`: The (relative or absolute) path, including
 the filename, to the input file that you want to compute a
 histogram over. See [Generating data](#generating-data) for
-how to produce data files with the correct layout.
+the details of how to produce data files with the correct layout.
 
-Note, that the runtimes reported are without the final reduction
+Note that the runtimes reported are without the final reduction
 phase, where intermediate histograms are combined.
 
 ### Futhark
@@ -89,7 +89,26 @@ phase, where intermediate histograms are combined.
 `futhark opencl` compiler.
 
 
+## Running the full performance test setup
+
+The setup requires that the `data/cuda` and `data/futhark`
+directories are present, and that the latter is populated
+manually with data files (see [Futhark
+data](#futhark-data)). Furthermore, a directory called
+`runtimes/` should also be created. Now you are ready to run
+`make plot` which will then take care of creating the CUDA
+data files (but not the Futhark data files!), compiling the
+sources, running the performance tests, and creating graphs
+presenting the data. The intermediate json data files
+containing the runtime information is placed in the
+`runtime/` directory.
+
+
 ## Generating data
+
+Just run `make plot` (or `make dat` if you only care about the data).
+Read on for the details.
+
 
 ### CUDA data
 
@@ -126,21 +145,6 @@ Run `./generate_fut_dat.sh` and futhark data files will be
 generated in the `data/futhark` directory. Values are
 hardcoded in the script and if they are changed, values in
 other files should be changed manually as well.
-
-
-## Running the full performance test setup
-
-The setup requires that the `data/cuda` and `data/futhark`
-directories are present, and that the latter is populated
-manually with data files (see [Futhark
-data](#futhark-data)). Furthermore, a directory called
-`runtimes/` should also be created. Now you are ready to run
-`make plot` which will then take care of creating the CUDA
-data files (but not the Futhark data files!), compiling the
-sources, running the performance tests, and creating graphs
-presenting the data. The intermediate json data files
-containing the runtime information is placed in the
-`runtime/` directory.
 
 
 ### Sune's comments
