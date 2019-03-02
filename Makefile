@@ -24,7 +24,7 @@ ITERATIONS=5
 COOP_LEVELS=1 4 16 32 64 256 1024 4096 16384 61440 # last is max threads
 HISTO_SIZES=16 32 64 256 1024 4096 16384 61440
 
-.PHONY: all plot dat clean_runtimes clean_data clean_pfds clean_bins
+.PHONY: all plot dat clean clean_runtimes clean_data clean_pfds clean_bins
 
 .PRECIOUS: $(RUNT_PATH)/hist-%.json hist-%-full.json $(DATA_PATH)/%-$(DATA_SIZE).dat $(DATA_PATH)/futhark/%
 
@@ -68,16 +68,16 @@ $(PDF_PATH)/hist-%.pdf $(PDF_PATH)/hist-%-full.pdf: $(PDF_PATH) $(RUNT_PATH)/his
 	python plot.py $* $(DATA_SIZE) $(COOP_LEVELS)
 
 clean_runtimes:
-	rm -f $(RUNT_PATH)/*
+	rm -fr $(RUNT_PATH)
 
 clean_data:
-#rm -f $(DATA_PATH)/* # you probably don't want to do this
+#rm -r $(DATA_PATH) # you probably don't want to do this
 
 clean_pdfs:
-	rm -f $(PDF_PATH)/*
+	rm -fr $(PDF_PATH)
 
 clean_bins:
 	rm -f $(CU_FILE)
 	rm -f $(FUT_FILE) $(FUT_FILE).c
 
-clean_all: clean_runtimes clean_data clean_pdfs clean_bins
+clean: clean_runtimes clean_data clean_pdfs clean_bins
