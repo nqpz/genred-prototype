@@ -118,7 +118,6 @@ const char* kernel_name(int kernel) {
 int kernel_run(int kernel,
                IN_T *h_img,
                OUT_T *h_his,
-               OUT_T *h_seq,
                int img_sz,
                int his_sz,
                int num_threads,
@@ -234,7 +233,7 @@ int kernel_run(int kernel,
     break;
   case SEQUENTIAL:
     scatter_seq<MY_OP, IN_T, OUT_T>
-      (h_img, h_seq, img_sz, his_sz, t_start, t_end);
+      (h_img, h_img, img_sz, his_sz, t_start, t_end);
     res = 0;
     break;
   default:
@@ -372,7 +371,7 @@ int main(int argc, const char* argv[])
   for (int i = -n_warmup_runs; i < n_runs; i++) {
     if (i < 0) {
       if (print_info) { puts("Warmup run."); }
-      res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end, print_info);
+      res = kernel_run(kernel, h_img, h_his, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end, print_info);
       if(res != 0) {
         free(h_img); free(h_his); free(h_seq);
         return res;
@@ -394,7 +393,7 @@ int main(int argc, const char* argv[])
       }
     } else {
       if (print_info) { printf("Run %d:\n", i); }
-      res = kernel_run(kernel, h_img, h_his, h_seq, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end, print_info);
+      res = kernel_run(kernel, h_img, h_his, img_sz, his_sz, num_threads, seq_chunk, coop_lvl, num_hists, &t_start, &t_end, print_info);
 
       if(res != 0) {
         free(h_img); free(h_his); free(h_seq);
