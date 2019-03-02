@@ -1,14 +1,9 @@
 # binaries (and intermediate files)
-host
-reduce
-reduce.c
+/host
+/reduce
+/reduce.c
 
 # data
-data/
-runtimes/
-
-# pdfs
-*.pdf
-
-# old things
-old/
+/data
+/runtimes
+/pdf
