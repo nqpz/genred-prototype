@@ -23,7 +23,7 @@ ITERATIONS=5
 COOP_LEVELS=1 4 16 32 64 256 1024 4096 16384 61440 # last is max threads
 HISTO_SIZES=16 32 64 256 1024 4096 16384 61440
 
-.PHONY: all plot clean_runtimes clean_data clean_pfds clean_bins
+.PHONY: all plot dat clean_runtimes clean_data clean_pfds clean_bins
 
 .PRECIOUS: $(RUNT_PATH)/hist-%.json hist-%-full.json $(DATA_PATH)/%-$(DATA_SIZE).dat $(DATA_PATH)/futhark/%
 
@@ -38,12 +38,15 @@ $(FUT_FILE):	$(FUT_FILE).fut
 	$(FC) $<
 
 # Run experiment
-plot:	$(HISTO_SIZES:%=hist-%.pdf) $(HISTO_SIZES:%=hist-%-full.pdf)
+plot: $(HISTO_SIZES:%=hist-%.pdf) $(HISTO_SIZES:%=hist-%-full.pdf)
 
 # Generate CUDA data (Futhark data should be created manually!)
 $(DATA_PATH)/%-$(DATA_SIZE).dat:
 	@echo '=== Generating data'
 	python generate_image.py $* $(DATA_SIZE)
+
+# Support generating data on its own.
+dat: $(HISTO_SIZES:%=$(DATA_PATH)/%-$(DATA_SIZE).dat)
 
 # Run actual programs
 $(RUNT_PATH)/hist-%.json: $(CU_FILE) $(DATA_PATH)/%-$(DATA_SIZE).dat
