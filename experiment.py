@@ -41,12 +41,17 @@ fullcoop_kernels = {
 vary_coop_kernels = {
     '12': 'AADD_NOSHARED_CHUNK_COOP',
     '13': 'AADD_SHARED_CHUNK_COOP',
+    '14': 'AADD_SHARED_CHUNK_COOP_WARP',
 
     '22': 'ACAS_NOSHARED_CHUNK_COOP',
     '23': 'ACAS_SHARED_CHUNK_COOP',
+    '24': 'ACAS_SHARED_CHUNK_COOP_WARP',
 
     '32': 'AEXCH_NOSHARED_CHUNK_COOP',
     '33': 'AEXCH_SHARED_CHUNK_COOP',
+    '34': 'AEXCH_SHARED_CHUNK_COOP_WARP',
+    '35': 'AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH',
+    '36': 'AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC',
 }
 
 
@@ -62,7 +67,7 @@ for k in vary_coop_kernels:
                 print '{0} {1} {2} {3} {4}'.format(
                     pgm_path, k, clvl, his_sz, filename
                 )
-                cmd  = [pgm_path, k, clvl, his_sz, filename, str(iterations)]
+                cmd  = [pgm_path, k, clvl, his_sz, filename, '1', '0']
                 try:
                     out  = check_output(cmd)
                     t0 = findall("\d+.\d+", out)
@@ -85,7 +90,7 @@ for k in fullcoop_kernels:
             print '{0} {1} {2} {3} {4}'.format(
                 pgm_path, k, clvl, his_sz, filename
             )
-            cmd  = [pgm_path, k, clvl, his_sz, filename, str(iterations)]
+            cmd  = [pgm_path, k, clvl, his_sz, filename, '1', '0']
             try:
                 out  = check_output(cmd)
                 t0 = findall("\d+.\d+", out)
@@ -107,7 +112,7 @@ with open(out_file, 'wb') as myfile:
     for _ in range(iterations):
         print '{0} {1} {2} {3} {4}'.format(
             pgm_path, 'Sequential version', 0, his_sz, filename)
-        cmd  = [pgm_path, '00', '0', his_sz, filename, str(iterations)]
+        cmd  = [pgm_path, '00', '0', his_sz, filename, '1', '0']
         try:
             out  = check_output(cmd)
             t0 = findall("\d+.\d+", out)
