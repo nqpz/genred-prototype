@@ -209,7 +209,7 @@ plt.figtext(col1           , -0.15, c1, fontweight='bold')
 plt.figtext(col1 + colspace, -0.15, c2)
 
 plt.show()
-plt.savefig('hist-{0}.pdf'.format(hist_sz),
+plt.savefig('pdf/hist-{0}.pdf'.format(hist_sz),
             bbox_extra_artists=(lgd,),
             bbox_inches='tight',
 )
@@ -238,7 +238,7 @@ ax.tick_params('y', colors='k')
 ax.set_title('N:{0}, H:{1}'.format(img_sz, hist_sz))
 
 plt.show()
-plt.savefig('hist-{0}-full.pdf'.format(hist_sz),
+plt.savefig('pdf/hist-{0}-full.pdf'.format(hist_sz),
             bbox_extra_artists=(lgd,),
             bbox_inches='tight')
 plt.close()

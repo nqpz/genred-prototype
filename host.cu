@@ -233,7 +233,7 @@ int kernel_run(int kernel,
     break;
   case SEQUENTIAL:
     scatter_seq<MY_OP, IN_T, OUT_T>
-      (h_img, h_img, img_sz, his_sz, t_start, t_end);
+      (h_img, h_his, img_sz, his_sz, t_start, t_end);
     res = 0;
     break;
   default:

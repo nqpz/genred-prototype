@@ -68,7 +68,7 @@ $(RUNT_PATH)/hist-%.json: $(RUNT_PATH) $(CU_FILE) $(DATA_PATH_CUDA)/%-$(DATA_SIZ
 
 $(RUNT_PATH)/fut_times.json: $(DATA_PATH_FUT) $(RUNT_PATH) $(FUT_FILE).fut
 	@echo '=== Running Futhark experiment'
-	futhark bench --runs=$(ITERATIONS) --backend=$(FB) --json $@ $<
+	futhark bench --runs=$(ITERATIONS) --backend=$(FB) --json $@ $(FUT_FILE).fut
 
 # Create graphs
 $(PDF_PATH)/hist-%.pdf $(PDF_PATH)/hist-%-full.pdf: $(PDF_PATH) $(RUNT_PATH)/hist-%.json $(RUNT_PATH)/fut_times.json
