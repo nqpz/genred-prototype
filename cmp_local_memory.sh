@@ -67,6 +67,7 @@
 
 set -e
 
+make datcuda
 make
 
 run() {

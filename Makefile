@@ -46,17 +46,23 @@ plot: $(HISTO_SIZES:%=$(PDF_PATH)/hist-%.pdf) $(HISTO_SIZES:%=$(PDF_PATH)/hist-%
 run: $(HISTO_SIZES:%=$(RUNT_PATH)/hist-%.json $(RUNT_PATH)/fut_times.json)
 
 # Support generating data on its own.
-dat: $(HISTO_SIZES:%=$(DATA_PATH_CUDA)/%-$(DATA_SIZE).dat) $(DATA_PATH_FUT)
+dat: datcuda datfut
+datcuda: $(DATA_PATH_CUDA) $(HISTO_SIZES:%=$(DATA_PATH_CUDA)/%-$(DATA_SIZE).dat)
+datfut: $(DATA_PATH_FUT)
 
-$(DATA_PATH_CUDA) $(RUNT_PATH) $(PDF_PATH):
+$(RUNT_PATH) $(PDF_PATH):
 	mkdir -p $@
+
+$(DATA_PATH_CUDA):
+	mkdir -p $(DATA_PATH_CUDA)
+	./generate_images_adverserial.py
 
 $(DATA_PATH_FUT):
 	mkdir -p $(DATA_PATH_FUT)
 	./generate_fut_dat.sh
 
 # Generate CUDA data (Futhark data should be created manually!)
-$(DATA_PATH_CUDA)/%-$(DATA_SIZE).dat: $(DATA_PATH_CUDA)
+$(DATA_PATH_CUDA)/%-$(DATA_SIZE).dat:
 	@echo '=== Generating data'
 	python generate_image.py $* $(DATA_SIZE)
 
