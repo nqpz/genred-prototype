@@ -2012,7 +2012,7 @@ exch_shared_chunk_coop_shlock_exch(IN_T  *h_img,
 
   // A histogram must not be shared among warps.  We depend on lock-step
   // execution.
-  assert(hists_per_block >= BLOCK_SZ / WARP_SZ && WARP_SZ % his_sz == 0);
+  assert(hists_per_block % (BLOCK_SZ / WARP_SZ) == 0);
   // We must be able to use each histogram entry as a thread id storage as well.
   assert(sizeof(int) <= sizeof(OUT_T)); // XXX: A thread id can be stored in
                                         // fewer bits than an entire int if we
@@ -2191,7 +2191,7 @@ exch_shared_chunk_coop_shlock_adhoc(IN_T  *h_img,
 
   // A histogram must not be shared among warps.  We depend on lock-step
   // execution.
-  assert(hists_per_block >= BLOCK_SZ / WARP_SZ && WARP_SZ % his_sz == 0);
+  assert(hists_per_block % (BLOCK_SZ / WARP_SZ) == 0);
   // We must be able to use each histogram entry as a thread id storage as well.
   assert(sizeof(int) <= sizeof(OUT_T)); // XXX: A thread id can be stored in
                                         // fewer bits than an entire int if we
