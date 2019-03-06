@@ -65,8 +65,8 @@ following:
     where versions prefixed by `1` are implemented using
     `atomicAdd`, versions prefixed by `2` are implemented by
     using `atomicCAS`, and versions prefixed by `3` are
-    implemented by using `atomicExch`. All methods implement
-    a simple addition operation.
+    implemented by using `atomicExch` (except for 36). All
+    methods implement a simple addition operation.
 
 2. `<coop. level>`: How many threads should cooperate on one
 histogram. If this is set to zero, the program will try and

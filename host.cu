@@ -8,32 +8,27 @@
 #include "kernels.cu.h"
 #include "misc.cu.h"
 
-/* x0: One histogram in global memory. One pixel per thread.
- * x1: One histogram in global memory. Chunking.
- * x2: Cooperation in global memory.   Chunking.
- * x3: Coop. in sh. and glob. memory.  Chunking.
- */
 #define SEQUENTIAL 00
 
 #define AADD_NOSHARED_NOCHUNK_FULLCOOP  10
 #define AADD_NOSHARED_CHUNK_FULLCOOP    11
 #define AADD_NOSHARED_CHUNK_COOP        12
 #define AADD_SHARED_CHUNK_COOP          13
-#define AADD_SHARED_CHUNK_COOP_WARP     14
+#define AADD_SHARED_CHUNK_COOP_COL      14
 
 #define ACAS_NOSHARED_NOCHUNK_FULLCOOP  20
 #define ACAS_NOSHARED_CHUNK_FULLCOOP    21
 #define ACAS_NOSHARED_CHUNK_COOP        22
 #define ACAS_SHARED_CHUNK_COOP          23
-#define ACAS_SHARED_CHUNK_COOP_WARP     24
+#define ACAS_SHARED_CHUNK_COOP_COL      24
 
 #define AEXCH_NOSHARED_NOCHUNK_FULLCOOP 30
 #define AEXCH_NOSHARED_CHUNK_FULLCOOP   31
 #define AEXCH_NOSHARED_CHUNK_COOP       32
 #define AEXCH_SHARED_CHUNK_COOP         33
-#define AEXCH_SHARED_CHUNK_COOP_WARP    34
-#define AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH  35
-#define AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC 36
+#define AEXCH_SHARED_CHUNK_COOP_COL     34
+#define SHLOCK_SHARED_CHUNK_COOP_AEXCH  35
+#define SHLOCK_SHARED_CHUNK_COOP_THREADID 36
 
 
 // runtime
@@ -62,8 +57,8 @@ const char* kernel_name(int kernel) {
   case AADD_SHARED_CHUNK_COOP:
     name = "AADD_SHARED_CHUNK_COOP";
     break;
-  case AADD_SHARED_CHUNK_COOP_WARP:
-    name = "AADD_SHARED_CHUNK_COOP_WARP";
+  case AADD_SHARED_CHUNK_COOP_COL:
+    name = "AADD_SHARED_CHUNK_COOP_COL";
     break;
 
     /* Locking - CAS */
@@ -79,8 +74,8 @@ const char* kernel_name(int kernel) {
   case ACAS_SHARED_CHUNK_COOP:
     name = "ACAS_SHARED_CHUNK_COOP";
     break;
-  case ACAS_SHARED_CHUNK_COOP_WARP:
-    name = "ACAS_SHARED_CHUNK_COOP_WARP";
+  case ACAS_SHARED_CHUNK_COOP_COL:
+    name = "ACAS_SHARED_CHUNK_COOP_COL";
     break;
 
     /* Locking - Exch */
@@ -96,14 +91,14 @@ const char* kernel_name(int kernel) {
   case AEXCH_SHARED_CHUNK_COOP:
     name = "AEXCH_SHARED_CHUNK_COOP";
     break;
-  case AEXCH_SHARED_CHUNK_COOP_WARP:
-    name = "AEXCH_SHARED_CHUNK_COOP_WARP";
+  case AEXCH_SHARED_CHUNK_COOP_COL:
+    name = "AEXCH_SHARED_CHUNK_COOP_COL";
     break;
-  case AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH:
-    name = "AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH";
+  case SHLOCK_SHARED_CHUNK_COOP_AEXCH:
+    name = "SHLOCK_SHARED_CHUNK_COOP_AEXCH";
     break;
-  case AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC:
-    name = "AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC";
+  case SHLOCK_SHARED_CHUNK_COOP_THREADID:
+    name = "SHLOCK_SHARED_CHUNK_COOP_THREADID";
     break;
   case SEQUENTIAL:
     name = "SEQUENTIAL";
@@ -152,8 +147,8 @@ int kernel_run(int kernel,
        num_threads, coop_lvl, num_hists,
        t_start, t_end, print_info);
     break;
-  case AADD_SHARED_CHUNK_COOP_WARP:
-    res = aadd_shared_chunk_coop_warp<IN_T>
+  case AADD_SHARED_CHUNK_COOP_COL:
+    res = aadd_shared_chunk_coop_col<IN_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, coop_lvl, num_hists,
        t_start, t_end, print_info);
@@ -183,8 +178,8 @@ int kernel_run(int kernel,
        num_threads, coop_lvl, num_hists,
        t_start, t_end, print_info);
     break;
-  case ACAS_SHARED_CHUNK_COOP_WARP:
-    res = CAS_shared_chunk_coop_warp<MY_OP, IN_T, OUT_T>
+  case ACAS_SHARED_CHUNK_COOP_COL:
+    res = CAS_shared_chunk_coop_col<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, coop_lvl, num_hists,
        t_start, t_end, print_info);
@@ -213,20 +208,20 @@ int kernel_run(int kernel,
        num_threads, seq_chunk, coop_lvl, num_hists,
        t_start, t_end, print_info);
     break;
-  case AEXCH_SHARED_CHUNK_COOP_WARP:
-    res = exch_shared_chunk_coop_warp<MY_OP, IN_T, OUT_T>
+  case AEXCH_SHARED_CHUNK_COOP_COL:
+    res = exch_shared_chunk_coop_col<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, seq_chunk, coop_lvl, num_hists,
        t_start, t_end, print_info);
     break;
-  case AEXCH_SHARED_CHUNK_COOP_SHLOCK_EXCH:
+  case SHLOCK_SHARED_CHUNK_COOP_AEXCH:
     res = exch_shared_chunk_coop_shlock_exch<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, seq_chunk, coop_lvl, num_hists,
        t_start, t_end, print_info);
     break;
-  case AEXCH_SHARED_CHUNK_COOP_SHLOCK_ADHOC:
-    res = exch_shared_chunk_coop_shlock_adhoc<MY_OP, IN_T, OUT_T>
+  case SHLOCK_SHARED_CHUNK_COOP_THREADID:
+    res = exch_shared_chunk_coop_shlock_threadid<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, seq_chunk, coop_lvl, num_hists,
        t_start, t_end, print_info);
@@ -252,14 +247,28 @@ int main(int argc, const char* argv[])
     return -1;
   }
 
+  const char* longest_name = kernel_name(SHLOCK_SHARED_CHUNK_COOP_THREADID);
+  const char* name = kernel_name(kernel);
+  printf("%s:", name);
+  for (unsigned int i = 0; i < strlen(longest_name) - strlen(name); i++) {
+    putchar('.');
+  }
+  putchar(' ');
+  if (print_info) {
+    printf("\nNumber of runs: %d\n", n_runs);
+  }
+
   /* abort as soon as possible */
   unsigned int his_mem_sz = his_sz * sizeof(OUT_T);
   int restrict = (kernel == AADD_SHARED_CHUNK_COOP ||
-                  kernel == AADD_SHARED_CHUNK_COOP_WARP ||
+                  kernel == AADD_SHARED_CHUNK_COOP_COL ||
                   kernel == ACAS_SHARED_CHUNK_COOP ||
-                  kernel == ACAS_SHARED_CHUNK_COOP_WARP ||
+                  kernel == ACAS_SHARED_CHUNK_COOP_COL ||
                   kernel == AEXCH_SHARED_CHUNK_COOP ||
-                  kernel == AEXCH_SHARED_CHUNK_COOP_WARP);
+                  kernel == AEXCH_SHARED_CHUNK_COOP_COL ||
+                  kernel == SHLOCK_SHARED_CHUNK_COOP_AEXCH ||
+                  kernel == SHLOCK_SHARED_CHUNK_COOP_THREADID
+                  );
   if(restrict && (his_mem_sz > SH_MEM_SZ)) {
     printf("Error: Histogram exceeds shared memory size\n");
     return -1;
@@ -362,10 +371,6 @@ int main(int argc, const char* argv[])
   unsigned long int elapsed, elapsed_total, elapsed_avg;
   struct timeval t_start, t_end, t_diff;
 
-  if (print_info) {
-    printf("Kernel: %s\n", kernel_name(kernel));
-    printf("Number of runs: %d\n", n_runs);
-  }
   elapsed_total = 0;
   int n_warmup_runs = 1;
   for (int i = -n_warmup_runs; i < n_runs; i++) {

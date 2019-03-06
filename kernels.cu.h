@@ -497,14 +497,14 @@ int aadd_shared_chunk_coop(T *h_img,
 /* Atomic add in shared memory - w. cooporation in shared mem. w. warp optimization */
 template<class T>
 __global__ void
-aadd_shared_chunk_coop_warp_kernel(T *d_img,
-                                   T *d_his,
-                                   int img_sz,
-                                   int his_sz,
-                                   int num_threads,
-                                   int coop_lvl,
-                                   int num_hists,
-                                   int hists_per_block)
+aadd_shared_chunk_coop_col_kernel(T *d_img,
+                                  T *d_his,
+                                  int img_sz,
+                                  int his_sz,
+                                  int num_threads,
+                                  int coop_lvl,
+                                  int num_hists,
+                                  int hists_per_block)
 {
   const unsigned int tid = threadIdx.x;
   const unsigned int gid = blockIdx.x * blockDim.x + tid;
@@ -541,16 +541,16 @@ aadd_shared_chunk_coop_warp_kernel(T *d_img,
 }
 
 template<class T>
-int aadd_shared_chunk_coop_warp(T *h_img,
-                                T *h_his,
-                                int img_sz,
-                                int his_sz,
-                                int num_threads,
-                                int coop_lvl,
-                                int num_hists,
-                                struct timeval *t_start,
-                                struct timeval *t_end,
-                                int PRINT_INFO)
+int aadd_shared_chunk_coop_col(T *h_img,
+                               T *h_his,
+                               int img_sz,
+                               int his_sz,
+                               int num_threads,
+                               int coop_lvl,
+                               int num_hists,
+                               struct timeval *t_start,
+                               struct timeval *t_end,
+                               int PRINT_INFO)
 {
   // allocate device memory
   unsigned int img_mem_sz = img_sz * sizeof(T);
@@ -599,7 +599,7 @@ int aadd_shared_chunk_coop_warp(T *h_img,
   // execute kernel
   gettimeofday(t_start, NULL);
 
-  aadd_shared_chunk_coop_warp_kernel<T>
+  aadd_shared_chunk_coop_col_kernel<T>
     <<<grid_dim_fst, block_dim_fst, his_mem_sz * hists_per_block>>>
     (d_img, d_his, img_sz, his_sz,
      num_threads, coop_lvl, num_hists, hists_per_block);
@@ -1067,14 +1067,14 @@ CAS_shared_chunk_coop(IN_T  *h_img,
 /* Manual lock - CAS in shared memory - coop. in shared mem. w. warp optimization */
 template<class OP, class IN_T, class OUT_T>
 __global__ void
-CAS_shared_chunk_coop_warp_kernel(IN_T  *d_img,
-                                  OUT_T *d_his,
-                                  int img_sz,
-                                  int his_sz,
-                                  int num_threads,
-                                  int coop_lvl,
-                                  int num_hists, // it this needed?
-                                  int hists_per_block)
+CAS_shared_chunk_coop_col_kernel(IN_T  *d_img,
+                                 OUT_T *d_his,
+                                 int img_sz,
+                                 int his_sz,
+                                 int num_threads,
+                                 int coop_lvl,
+                                 int num_hists, // it this needed?
+                                 int hists_per_block)
 {
   // global thread id
   const unsigned int tid = threadIdx.x;
@@ -1120,16 +1120,16 @@ CAS_shared_chunk_coop_warp_kernel(IN_T  *d_img,
 
 template<class OP, class IN_T, class OUT_T>
 int
-CAS_shared_chunk_coop_warp(IN_T  *h_img,
-                           OUT_T *h_his,
-                           int img_sz,
-                           int his_sz,
-                           int num_threads,
-                           int coop_lvl,
-                           int num_hists,
-                           struct timeval *t_start,
-                           struct timeval *t_end,
-                           int PRINT_INFO)
+CAS_shared_chunk_coop_col(IN_T  *h_img,
+                          OUT_T *h_his,
+                          int img_sz,
+                          int his_sz,
+                          int num_threads,
+                          int coop_lvl,
+                          int num_hists,
+                          struct timeval *t_start,
+                          struct timeval *t_end,
+                          int PRINT_INFO)
 {
   // because of shared memory -- should be avoided from host.cu
   if(coop_lvl > BLOCK_SZ) {
@@ -1184,7 +1184,7 @@ CAS_shared_chunk_coop_warp(IN_T  *h_img,
   // execute kernel
   gettimeofday(t_start, NULL);
 
-  CAS_shared_chunk_coop_warp_kernel<OP, IN_T, OUT_T>
+  CAS_shared_chunk_coop_col_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst, his_mem_sz * hists_per_block>>>
     (d_img, d_his, img_sz, his_sz,
      num_threads, coop_lvl, num_hists, hists_per_block);
@@ -1746,15 +1746,15 @@ exch_shared_chunk_coop(IN_T  *h_img,
 /* Manual lock - Exch. in shared memory - coop. in shared mem. w. warp optimization */
 template<class OP, class IN_T, class OUT_T>
 __global__ void
-exch_shared_chunk_coop_warp_kernel(IN_T  *d_img,
-                                   OUT_T *d_his,
-                                   int img_sz,
-                                   int his_sz,
-                                   int num_threads,
-                                   int seq_chunk,
-                                   int coop_lvl,
-                                   int num_hists,
-                                   int hists_per_block)
+exch_shared_chunk_coop_col_kernel(IN_T  *d_img,
+                                  OUT_T *d_his,
+                                  int img_sz,
+                                  int his_sz,
+                                  int num_threads,
+                                  int seq_chunk,
+                                  int coop_lvl,
+                                  int num_hists,
+                                  int hists_per_block)
 {
   // global thread id
   const unsigned int tid = threadIdx.x;
@@ -1808,17 +1808,17 @@ exch_shared_chunk_coop_warp_kernel(IN_T  *d_img,
 
 template<class OP, class IN_T, class OUT_T>
 int
-exch_shared_chunk_coop_warp(IN_T  *h_img,
-                            OUT_T *h_his,
-                            int img_sz,
-                            int his_sz,
-                            int num_threads,
-                            int seq_chunk,
-                            int coop_lvl,
-                            int num_hists,
-                            struct timeval *t_start,
-                            struct timeval *t_end,
-                            int PRINT_INFO)
+exch_shared_chunk_coop_col(IN_T  *h_img,
+                           OUT_T *h_his,
+                           int img_sz,
+                           int his_sz,
+                           int num_threads,
+                           int seq_chunk,
+                           int coop_lvl,
+                           int num_hists,
+                           struct timeval *t_start,
+                           struct timeval *t_end,
+                           int PRINT_INFO)
 {
   if(coop_lvl > BLOCK_SZ) {
     printf("Error: cooporation level cannot exceed block size\n");
@@ -1881,7 +1881,7 @@ exch_shared_chunk_coop_warp(IN_T  *h_img,
   // execute kernel
   gettimeofday(t_start, NULL);
 
-  exch_shared_chunk_coop_warp_kernel<OP, IN_T, OUT_T>
+  exch_shared_chunk_coop_col_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst,
     (lck_mem_sz + his_mem_sz) * hists_per_block>>>
     (d_img, d_his, img_sz, his_sz,
@@ -2010,10 +2010,7 @@ exch_shared_chunk_coop_shlock_exch(IN_T  *h_img,
   int thrds_per_block = hists_per_block * coop_lvl;
   int num_blocks = ceil(num_hists / (float)hists_per_block);
 
-  // A histogram must not be shared among warps.  We depend on lock-step
-  // execution.
-  assert(hists_per_block % (BLOCK_SZ / WARP_SZ) == 0);
-  // We must be able to use each histogram entry as a thread id storage as well.
+  // We must be able to use each histogram entry as a thread id storage.
   assert(sizeof(int) <= sizeof(OUT_T)); // XXX: A thread id can be stored in
                                         // fewer bits than an entire int if we
                                         // need it to.
@@ -2026,8 +2023,13 @@ exch_shared_chunk_coop_shlock_exch(IN_T  *h_img,
   }
 
   if(hists_per_block * his_mem_sz > SH_MEM_SZ) {
-    printf("Error: Histograms exceed "
-           "shared memory size\n");
+    puts("Error: Histograms exceed shared memory size.");
+    return -1;
+  }
+  // A histogram must not be shared among warps.  We depend on lock-step
+  // execution.
+  if (hists_per_block % (BLOCK_SZ / WARP_SZ) != 0) {
+    puts("Error: Not enough shared memory"); // for an aligned number of histograms.
     return -1;
   }
 
@@ -2092,7 +2094,7 @@ exch_shared_chunk_coop_shlock_exch(IN_T  *h_img,
 /* Manual lock in shared memory - ad-hoc lock in same shared memory as histogram - coop. in shared mem. */
 template<class OP, class IN_T, class OUT_T>
 __global__ void
-exch_shared_chunk_coop_shlock_adhoc_kernel(IN_T  *d_img,
+exch_shared_chunk_coop_shlock_threadid_kernel(IN_T  *d_img,
                                            OUT_T *d_his,
                                            int img_sz,
                                            int his_sz,
@@ -2160,7 +2162,7 @@ exch_shared_chunk_coop_shlock_adhoc_kernel(IN_T  *d_img,
 
 template<class OP, class IN_T, class OUT_T>
 int
-exch_shared_chunk_coop_shlock_adhoc(IN_T  *h_img,
+exch_shared_chunk_coop_shlock_threadid(IN_T  *h_img,
                                     OUT_T *h_his,
                                     int img_sz,
                                     int his_sz,
@@ -2189,9 +2191,6 @@ exch_shared_chunk_coop_shlock_adhoc(IN_T  *h_img,
   int thrds_per_block = hists_per_block * coop_lvl;
   int num_blocks = ceil(num_hists / (float)hists_per_block);
 
-  // A histogram must not be shared among warps.  We depend on lock-step
-  // execution.
-  assert(hists_per_block % (BLOCK_SZ / WARP_SZ) == 0);
   // We must be able to use each histogram entry as a thread id storage as well.
   assert(sizeof(int) <= sizeof(OUT_T)); // XXX: A thread id can be stored in
                                         // fewer bits than an entire int if we
@@ -2205,8 +2204,14 @@ exch_shared_chunk_coop_shlock_adhoc(IN_T  *h_img,
   }
 
   if(hists_per_block * his_mem_sz > SH_MEM_SZ) {
-    printf("Error: Histograms exceed "
-           "shared memory size\n");
+    printf("Error: Histograms exceed shared memory size\n");
+    return -1;
+  }
+
+  // A histogram must not be shared among warps.  We depend on lock-step
+  // execution.
+  if (hists_per_block % (BLOCK_SZ / WARP_SZ) != 0) {
+    puts("Error: Not enough shared memory"); // for an aligned number of histograms.
     return -1;
   }
 
@@ -2238,7 +2243,7 @@ exch_shared_chunk_coop_shlock_adhoc(IN_T  *h_img,
   // execute kernel
   gettimeofday(t_start, NULL);
 
-  exch_shared_chunk_coop_shlock_adhoc_kernel<OP, IN_T, OUT_T>
+  exch_shared_chunk_coop_shlock_threadid_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst,
     his_mem_sz * hists_per_block>>>
     (d_img, d_his, img_sz, his_sz,
