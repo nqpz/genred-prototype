@@ -73,15 +73,11 @@ run() {
     ./host $kernel $coop_lvl $hist_size data/cuda/$input-$img_size.dat 100 0
 }
 
-run_with_coop_lvl() {
-    coop_lvl=$1
-    echo "Cooperation level: $coop_lvl"
-    echo "====================="
-
+main() {
     for hist_size in 16 64 256 1024 4096; do
         echo "  Dataset: random; histogram size: $hist_size"
-        for id in 12 13 14 23 24 33 34 35 36; do
-            echo "    $(run $id $coop_lvl $hist_size)"
+        for id in 12 13 14 22 23 24 32 33 34 35 36; do
+            echo "    $(run $id -1 $hist_size)"
         done
         echo
     done
@@ -89,31 +85,25 @@ run_with_coop_lvl() {
 
     for hist_size in 16 64 256 1024 4096; do
         echo "  Dataset: all indices the same; histogram size: $hist_size"
-        for id in 12 13 14 23 24 33 34 35 36; do
-            echo "    $(run $id $coop_lvl $hist_size zeros)"
+        for id in 12 13 14 22 23 24 32 33 34 35 36; do
+            echo "    $(run $id -1 $hist_size zeros)"
         done
         echo
     done
     new_page
 
     hist_size=32
-    echo "  Dataset: reduction in conflicts for row-based cooperation; histogram size: $hist_size"
-    for id in 12 13 14 23 24 33 34 35 36; do
-        echo "    $(run $id $coop_lvl $hist_size no-conflicts-warp-$hist_size)"
+    echo "  Dataset: no conflicts for row-based cooperation; histogram size: $hist_size"
+    for id in 12 13 14 22 23 24 32 33 34 35 36; do
+        echo "    $(run $id -1 $hist_size no-conflicts-warp-$hist_size)"
     done
     echo
     hist_size=256
-    echo "  Dataset: reduction in conflicts for row-based cooperation; histogram size: $hist_size"
-    for id in 12 13 14 23 24 33 34 35 36; do
-        echo "    $(run $id $coop_lvl $hist_size no-conflicts-warp-$hist_size 9999872)"
+    echo "  Dataset: no conflicts for row-based cooperation; histogram size: $hist_size"
+    for id in 12 13 14 22 23 24 32 33 34 35 36; do
+        echo "    $(run $id -1 $hist_size no-conflicts-warp-$hist_size 9999872)"
     done
     new_page
-}
-
-main() {
-    for coop_lvl in 32 16 4 1; do
-        run_with_coop_lvl $coop_lvl
-    done
 }
 
 main

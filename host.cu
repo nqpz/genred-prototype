@@ -10,31 +10,31 @@
 
 #define SEQUENTIAL 00
 
-#define AADD_NOSHARED_NOCHUNK_FULLCOOP  10
-#define AADD_NOSHARED_CHUNK_FULLCOOP    11
-#define AADD_NOSHARED_CHUNK_COOP        12
-#define AADD_SHARED_CHUNK_COOP          13
-#define AADD_SHARED_CHUNK_COOP_COL      14
+#define AADD_GLOBAL_NOCHUNK_FULLCOOP      10
+#define AADD_GLOBAL_CHUNK_FULLCOOP        11
+#define AADD_GLOBAL_CHUNK_COOP            12
+#define AADD_SHARED_CHUNK_COOP            13
+#define AADD_SHARED_CHUNK_COOP_COL        14
 
-#define ACAS_NOSHARED_NOCHUNK_FULLCOOP  20
-#define ACAS_NOSHARED_CHUNK_FULLCOOP    21
-#define ACAS_NOSHARED_CHUNK_COOP        22
-#define ACAS_SHARED_CHUNK_COOP          23
-#define ACAS_SHARED_CHUNK_COOP_COL      24
+#define ACAS_GLOBAL_NOCHUNK_FULLCOOP      20
+#define ACAS_GLOBAL_CHUNK_FULLCOOP        21
+#define ACAS_GLOBAL_CHUNK_COOP            22
+#define ACAS_SHARED_CHUNK_COOP            23
+#define ACAS_SHARED_CHUNK_COOP_COL        24
 
-#define AEXCH_NOSHARED_NOCHUNK_FULLCOOP 30
-#define AEXCH_NOSHARED_CHUNK_FULLCOOP   31
-#define AEXCH_NOSHARED_CHUNK_COOP       32
-#define AEXCH_SHARED_CHUNK_COOP         33
-#define AEXCH_SHARED_CHUNK_COOP_COL     34
-#define SHLOCK_SHARED_CHUNK_COOP_AEXCH  35
+#define AEXCH_GLOBAL_NOCHUNK_FULLCOOP     30
+#define AEXCH_GLOBAL_CHUNK_FULLCOOP       31
+#define AEXCH_GLOBAL_CHUNK_COOP           32
+#define AEXCH_SHARED_CHUNK_COOP           33
+#define AEXCH_SHARED_CHUNK_COOP_COL       34
+#define SHLOCK_SHARED_CHUNK_COOP_AEXCH    35
 #define SHLOCK_SHARED_CHUNK_COOP_THREADID 36
 
 
 // runtime
 #define MICROS 1 // 0 will give runtime in millisecs.
 #define PRINT_RUNTIME(time) (MICROS ? \
-  printf("%lu\n", time) : printf("%.3f\n", time / 1000.0))
+  printf("%lu", time) : printf("%.3f", time / 1000.0))
 
 // misc
 #define IN_T  int
@@ -45,14 +45,14 @@ const char* kernel_name(int kernel) {
   const char* name;
   switch(kernel) {
     /* Atomic add */
-  case AADD_NOSHARED_NOCHUNK_FULLCOOP:
-    name = "AADD_NOSHARED_NOCHUNK_FULLCOOP";
+  case AADD_GLOBAL_NOCHUNK_FULLCOOP:
+    name = "AADD_GLOBAL_NOCHUNK_FULLCOOP";
     break;
-  case AADD_NOSHARED_CHUNK_FULLCOOP:
-    name = "AADD_NOSHARED_CHUNK_FULLCOOP";
+  case AADD_GLOBAL_CHUNK_FULLCOOP:
+    name = "AADD_GLOBAL_CHUNK_FULLCOOP";
     break;
-  case AADD_NOSHARED_CHUNK_COOP:
-    name = "AADD_NOSHARED_CHUNK_COOP";
+  case AADD_GLOBAL_CHUNK_COOP:
+    name = "AADD_GLOBAL_CHUNK_COOP";
     break;
   case AADD_SHARED_CHUNK_COOP:
     name = "AADD_SHARED_CHUNK_COOP";
@@ -62,14 +62,14 @@ const char* kernel_name(int kernel) {
     break;
 
     /* Locking - CAS */
-  case ACAS_NOSHARED_NOCHUNK_FULLCOOP:
-    name = "ACAS_NOSHARED_NOCHUNK_FULLCOOP";
+  case ACAS_GLOBAL_NOCHUNK_FULLCOOP:
+    name = "ACAS_GLOBAL_NOCHUNK_FULLCOOP";
     break;
-  case ACAS_NOSHARED_CHUNK_FULLCOOP:
-    name = "ACAS_NOSHARED_CHUNK_FULLCOOP";
+  case ACAS_GLOBAL_CHUNK_FULLCOOP:
+    name = "ACAS_GLOBAL_CHUNK_FULLCOOP";
     break;
-  case ACAS_NOSHARED_CHUNK_COOP:
-    name = "ACAS_NOSHARED_CHUNK_COOP";
+  case ACAS_GLOBAL_CHUNK_COOP:
+    name = "ACAS_GLOBAL_CHUNK_COOP";
     break;
   case ACAS_SHARED_CHUNK_COOP:
     name = "ACAS_SHARED_CHUNK_COOP";
@@ -79,14 +79,14 @@ const char* kernel_name(int kernel) {
     break;
 
     /* Locking - Exch */
-  case AEXCH_NOSHARED_NOCHUNK_FULLCOOP:
-    name = "AEXCH_NOSHARED_NOCHUNK_FULLCOOP";
+  case AEXCH_GLOBAL_NOCHUNK_FULLCOOP:
+    name = "AEXCH_GLOBAL_NOCHUNK_FULLCOOP";
     break;
-  case AEXCH_NOSHARED_CHUNK_FULLCOOP:
-    name = "AEXCH_NOSHARED_CHUNK_FULLCOOP";
+  case AEXCH_GLOBAL_CHUNK_FULLCOOP:
+    name = "AEXCH_GLOBAL_CHUNK_FULLCOOP";
     break;
-  case AEXCH_NOSHARED_CHUNK_COOP:
-    name = "AEXCH_NOSHARED_CHUNK_COOP";
+  case AEXCH_GLOBAL_CHUNK_COOP:
+    name = "AEXCH_GLOBAL_CHUNK_COOP";
     break;
   case AEXCH_SHARED_CHUNK_COOP:
     name = "AEXCH_SHARED_CHUNK_COOP";
@@ -125,17 +125,17 @@ int kernel_run(int kernel,
   int res;
   switch(kernel) {
     /* Atomic add */
-  case AADD_NOSHARED_NOCHUNK_FULLCOOP:
+  case AADD_GLOBAL_NOCHUNK_FULLCOOP:
     res = aadd_noShared_noChunk_fullCoop<IN_T>
       (h_img, h_his, img_sz, his_sz, t_start, t_end,
        print_info);
     break;
-  case AADD_NOSHARED_CHUNK_FULLCOOP:
+  case AADD_GLOBAL_CHUNK_FULLCOOP:
     res = aadd_noShared_chunk_fullCoop<IN_T>
       (h_img, h_his, img_sz, his_sz, num_threads,
        t_start, t_end, print_info);
     break;
-  case AADD_NOSHARED_CHUNK_COOP:
+  case AADD_GLOBAL_CHUNK_COOP:
     res = aadd_noShared_chunk_coop<IN_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, coop_lvl, num_hists,
@@ -155,18 +155,18 @@ int kernel_run(int kernel,
     break;
 
     /* Locking - CAS */
-  case ACAS_NOSHARED_NOCHUNK_FULLCOOP:
+  case ACAS_GLOBAL_NOCHUNK_FULLCOOP:
     res = CAS_noShared_noChunk_fullCoop
       <MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz, t_start, t_end,
        print_info);
     break;
-  case ACAS_NOSHARED_CHUNK_FULLCOOP:
+  case ACAS_GLOBAL_CHUNK_FULLCOOP:
     res = CAS_noShared_chunk_fullCoop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz, num_threads,
        t_start, t_end, print_info);
     break;
-  case ACAS_NOSHARED_CHUNK_COOP:
+  case ACAS_GLOBAL_CHUNK_COOP:
     res = CAS_noShared_chunk_coop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, coop_lvl, num_hists,
@@ -186,17 +186,17 @@ int kernel_run(int kernel,
     break;
 
     /* Locking - Exch */
-  case AEXCH_NOSHARED_NOCHUNK_FULLCOOP:
+  case AEXCH_GLOBAL_NOCHUNK_FULLCOOP:
     res = exch_noShared_noChunk_fullCoop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz, t_start, t_end,
        print_info);
     break;
-  case AEXCH_NOSHARED_CHUNK_FULLCOOP:
+  case AEXCH_GLOBAL_CHUNK_FULLCOOP:
     res = exch_noShared_chunk_fullCoop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz, num_threads, seq_chunk,
        t_start, t_end, print_info);
     break;
-  case AEXCH_NOSHARED_CHUNK_COOP:
+  case AEXCH_GLOBAL_CHUNK_COOP:
     res = exch_noShared_chunk_coop<MY_OP, IN_T, OUT_T>
       (h_img, h_his, img_sz, his_sz,
        num_threads, seq_chunk, coop_lvl, num_hists,
@@ -335,24 +335,46 @@ int main(int argc, const char* argv[])
   if(coop_lvl_tmp > num_threads) {
     coop_lvl = num_threads;
   } else if(coop_lvl_tmp == 0) {
+    // Heuristic for cooperating in global memory.
     coop_lvl = COOP_LEVEL(his_sz, seq_chunk);
+  } else if(coop_lvl_tmp == -1) {
+    // Heuristic for cooperating in local memory.
+    coop_lvl = his_sz / (SH_MEM_SZ / sizeof(OUT_T) / BLOCK_SZ);
+    if (kernel == AEXCH_SHARED_CHUNK_COOP ||
+        kernel == AEXCH_SHARED_CHUNK_COOP_COL) {
+      // The same amount of local memory (assuming ints) is also needed for the
+      // lock.
+      coop_lvl *= 2;
+    }
+    // Round up to the nearest power of two to ensure usage of all threads in a block.
+    coop_lvl = pow(2, ceil(log(coop_lvl) / log(2)));
   } else {
     coop_lvl = coop_lvl_tmp;
   }
+
+  if ((kernel == SHLOCK_SHARED_CHUNK_COOP_AEXCH ||
+       kernel == SHLOCK_SHARED_CHUNK_COOP_THREADID)) {
+    if (coop_lvl < (BLOCK_SZ / WARP_SZ) && (BLOCK_SZ / WARP_SZ) % coop_lvl != 0) {
+      do {
+        coop_lvl++; // can be better
+      } while (coop_lvl < (BLOCK_SZ / WARP_SZ) && (BLOCK_SZ / WARP_SZ) % coop_lvl != 0);
+    }
+  }
+
   int num_hists   = NUM_HISTOS(num_threads, coop_lvl);
 
   if(print_info) {
     printf("== Heuristic formulas ==\n");
-    if(kernel == AADD_NOSHARED_NOCHUNK_FULLCOOP ||
-       kernel == ACAS_NOSHARED_NOCHUNK_FULLCOOP ||
-       kernel == AEXCH_NOSHARED_NOCHUNK_FULLCOOP) {
+    if(kernel == AADD_GLOBAL_NOCHUNK_FULLCOOP ||
+       kernel == ACAS_GLOBAL_NOCHUNK_FULLCOOP ||
+       kernel == AEXCH_GLOBAL_NOCHUNK_FULLCOOP) {
       printf("Number of threads:    %d\n", img_sz);
       printf("Sequential chunk:     %d\n", 1);
       printf("Cooperation level:    %d\n", img_sz);
       printf("Number of histograms: %d\n", 1);
-    } else if(kernel == AADD_NOSHARED_CHUNK_FULLCOOP ||
-              kernel == ACAS_NOSHARED_CHUNK_FULLCOOP ||
-              kernel == AEXCH_NOSHARED_CHUNK_FULLCOOP) {
+    } else if(kernel == AADD_GLOBAL_CHUNK_FULLCOOP ||
+              kernel == ACAS_GLOBAL_CHUNK_FULLCOOP ||
+              kernel == AEXCH_GLOBAL_CHUNK_FULLCOOP) {
       printf("Number of threads:    %d\n", num_threads);
       printf("Sequential chunk:     %d\n", seq_chunk);
       printf("Cooperation level:    %d\n", num_threads);
@@ -390,7 +412,7 @@ int main(int argc, const char* argv[])
         /* validate the result */
         int valid = validate_array<OUT_T>(h_his, h_seq, his_sz);
         if(!valid) {
-          printf("ERROR: Invalid!\n");
+          printf("ERROR: Invalid! (coop level: %d)\n", coop_lvl);
           res = -1;
           print_invalid_indices<MY_OP, OUT_T>(h_his, h_seq, his_sz);
           return 1;
@@ -410,13 +432,14 @@ int main(int argc, const char* argv[])
       elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
       if (print_info) {
         PRINT_RUNTIME(elapsed);
-        printf("====\n");
+        printf("\n====\n");
       }
       elapsed_total += elapsed;
     }
   }
   elapsed_avg = elapsed_total / n_runs;
   PRINT_RUNTIME(elapsed_avg);
+  printf(" (coop. level: %d)\n", coop_lvl);
 
   /* free host memory */
   free(h_img); free(h_his); free(h_seq);

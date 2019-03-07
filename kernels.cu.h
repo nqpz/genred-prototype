@@ -2028,8 +2028,8 @@ exch_shared_chunk_coop_shlock_exch(IN_T  *h_img,
   }
   // A histogram must not be shared among warps.  We depend on lock-step
   // execution.
-  if (hists_per_block % (BLOCK_SZ / WARP_SZ) != 0) {
-    puts("Error: Not enough shared memory"); // for an aligned number of histograms.
+  if (WARP_SZ % coop_lvl != 0) {
+    printf("Error: Not enough subhistograms (coop. level: %d)\n", coop_lvl); // for an aligned number of histograms.
     return -1;
   }
 
@@ -2210,8 +2210,8 @@ exch_shared_chunk_coop_shlock_threadid(IN_T  *h_img,
 
   // A histogram must not be shared among warps.  We depend on lock-step
   // execution.
-  if (hists_per_block % (BLOCK_SZ / WARP_SZ) != 0) {
-    puts("Error: Not enough shared memory"); // for an aligned number of histograms.
+  if (WARP_SZ % coop_lvl != 0) {
+    printf("Error: Not enough subhistograms (coop. level: %d)\n", coop_lvl); // for an aligned number of histograms.
     return -1;
   }
 
