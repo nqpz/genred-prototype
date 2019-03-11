@@ -77,7 +77,7 @@ main() {
     for hist_size in 16 64 256 1024 4096; do
         echo "  Dataset: random; histogram size: $hist_size"
         for id in 12 13 14 22 23 24 32 33 34 35 36; do
-            echo "    $(run $id -1 $hist_size)"
+            echo "    $(run $id 0 $hist_size)"
         done
         echo
     done
@@ -86,7 +86,7 @@ main() {
     for hist_size in 16 64 256 1024 4096; do
         echo "  Dataset: all indices the same; histogram size: $hist_size"
         for id in 12 13 14 22 23 24 32 33 34 35 36; do
-            echo "    $(run $id -1 $hist_size zeros)"
+            echo "    $(run $id 0 $hist_size zeros)"
         done
         echo
     done
@@ -95,13 +95,13 @@ main() {
     hist_size=32
     echo "  Dataset: no conflicts for row-based cooperation; histogram size: $hist_size"
     for id in 12 13 14 22 23 24 32 33 34 35 36; do
-        echo "    $(run $id -1 $hist_size no-conflicts-warp-$hist_size)"
+        echo "    $(run $id 0 $hist_size no-conflicts-warp-$hist_size)"
     done
     echo
     hist_size=256
     echo "  Dataset: no conflicts for row-based cooperation; histogram size: $hist_size"
     for id in 12 13 14 22 23 24 32 33 34 35 36; do
-        echo "    $(run $id -1 $hist_size no-conflicts-warp-$hist_size 9999872)"
+        echo "    $(run $id 0 $hist_size no-conflicts-warp-$hist_size 9999872)"
     done
     new_page
 }

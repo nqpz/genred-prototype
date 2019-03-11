@@ -334,10 +334,13 @@ int main(int argc, const char* argv[])
   int coop_lvl = 0;
   if(coop_lvl_tmp > num_threads) {
     coop_lvl = num_threads;
-  } else if(coop_lvl_tmp == 0) {
+  } else if(coop_lvl_tmp == 0 &&
+            (kernel == AADD_GLOBAL_CHUNK_COOP ||
+             kernel == ACAS_GLOBAL_CHUNK_COOP ||
+             kernel == AEXCH_GLOBAL_CHUNK_COOP)) {
     // Heuristic for cooperating in global memory.
-    coop_lvl = COOP_LEVEL(his_sz, seq_chunk);
-  } else if(coop_lvl_tmp == -1) {
+    coop_lvl = his_sz;
+  } else if(coop_lvl_tmp == 0) {
     // Heuristic for cooperating in local memory.
     coop_lvl = his_sz / (SH_MEM_SZ / sizeof(OUT_T) / BLOCK_SZ);
     if (kernel == AEXCH_SHARED_CHUNK_COOP ||

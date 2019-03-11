@@ -13,7 +13,6 @@
 #define NUM_THREADS(n)  min(n, HWD)
 
 #define SEQ_CHUNK(x, y)  ceil(x / (float)y)
-#define COOP_LEVEL(x, y) ceil(x / (float)y)
 #define NUM_HISTOS(x, y) ceil(x / (float)y)
 
 #define BLOCK_X_DIM(x) (x < BLOCK_SZ ? x : BLOCK_SZ)
