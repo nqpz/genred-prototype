@@ -342,7 +342,7 @@ int main(int argc, const char* argv[])
     coop_lvl = his_sz;
   } else if(coop_lvl_tmp == 0) {
     // Heuristic for cooperating in local memory.
-    coop_lvl = his_sz / (SH_MEM_SZ / sizeof(OUT_T) / BLOCK_SZ);
+    coop_lvl = ceil(his_sz / (float) (SH_MEM_SZ / sizeof(OUT_T) / BLOCK_SZ));
     if (kernel == AEXCH_SHARED_CHUNK_COOP ||
         kernel == AEXCH_SHARED_CHUNK_COOP_COL) {
       // The same amount of local memory (assuming ints) is also needed for the
