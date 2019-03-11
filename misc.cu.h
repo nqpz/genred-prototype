@@ -37,19 +37,33 @@ class Mul
   static __device__ __host__ inline T apply(const T t1, const T t2) { return t1 * t2; }
 };
 
-/* Compute difference between two timeval structs. */
-int timeval_subtract(struct timeval* result,
-                     struct timeval* t2,
-                     struct timeval* t1)
-{
-  unsigned int resolution=1000000;
-  long int diff = (t2->tv_usec + resolution * t2->tv_sec) -
-    (t1->tv_usec + resolution * t1->tv_sec);
-  result->tv_sec = diff / resolution;
-  result->tv_usec = diff % resolution;
+// The function get_wall_time() returns the wall time in microseconds (with an
+// unspecified offset).  Taken from https://github.com/coancea/OpenCL-Repo/
 
-  return (diff<0);
+#ifdef _WIN32
+
+#include <windows.h>
+
+static int64_t get_wall_time(void) {
+  LARGE_INTEGER time,freq;
+  assert(QueryPerformanceFrequency(&freq));
+  assert(QueryPerformanceCounter(&time));
+  return (int64_t)(((double)time.QuadPart / freq.QuadPart) * 1000000);
 }
+
+#else
+/* Assuming POSIX */
+
+#include <time.h>
+#include <sys/time.h>
+
+static int64_t get_wall_time(void) {
+  struct timeval time;
+  assert(gettimeofday(&time,NULL) == 0);
+  return time.tv_sec * 1000000 + time.tv_usec;
+}
+
+#endif
 
 /* Validate input */
 int validate_input(int argc, const char* argv[],

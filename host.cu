@@ -2,7 +2,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/time.h>
 #include <unistd.h>
 
 #include "kernels.cu.h"
@@ -119,8 +118,8 @@ int kernel_run(int kernel,
                int seq_chunk,
                int coop_lvl,
                int num_hists,
-               struct timeval *t_start,
-               struct timeval *t_end,
+               int64_t *t_start,
+               int64_t *t_end,
                int print_info) {
   int res;
   switch(kernel) {
@@ -394,7 +393,7 @@ int main(int argc, const char* argv[])
   /** Kernel versions **/
   int res = 0;
   unsigned long int elapsed, elapsed_total, elapsed_avg;
-  struct timeval t_start, t_end, t_diff;
+  int64_t t_start, t_end;
 
   elapsed_total = 0;
   int n_warmup_runs = 1;
@@ -408,7 +407,7 @@ int main(int argc, const char* argv[])
       }
       if (i == -n_warmup_runs) {
         /* execute sequential scatter */
-        struct timeval seq_start, seq_end;
+        int64_t seq_start, seq_end;
         scatter_seq<MY_OP, IN_T, OUT_T>
           (h_img, h_seq, img_sz, his_sz, &seq_start, &seq_end);
 
@@ -431,8 +430,7 @@ int main(int argc, const char* argv[])
       }
 
       /* compute elapsed time for parallel version */
-      timeval_subtract(&t_diff, &t_end, &t_start);
-      elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+      elapsed = t_end - t_start;
       if (print_info) {
         PRINT_RUNTIME(elapsed);
         printf("\n====\n");

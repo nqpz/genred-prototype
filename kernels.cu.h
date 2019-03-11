@@ -53,10 +53,10 @@ scatter_seq(IN_T  *img,
             OUT_T *his,
             int img_sz,
             int his_sz,
-            struct timeval *t_start,
-            struct timeval *t_end)
+            int64_t *t_start,
+            int64_t *t_end)
 {
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   /* scatter */
   for(int i=0; i < img_sz; i ++) {
@@ -69,7 +69,7 @@ scatter_seq(IN_T  *img,
     his[idx] = OP::apply(his[idx], val);
   }
 
-  gettimeofday(t_end, NULL);
+  *t_end = get_wall_time();
 }
 
 /* Common reduction kernel */
@@ -135,8 +135,8 @@ aadd_noShared_noChunk_fullCoop(T *h_img,
                                T *h_his,
                                int img_sz,
                                int his_sz,
-                               struct timeval *t_start,
-                               struct timeval *t_end,
+                               int64_t *t_start,
+                               int64_t *t_end,
                                int PRINT_INFO)
 {
   // allocate device memory
@@ -160,7 +160,7 @@ aadd_noShared_noChunk_fullCoop(T *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   aadd_noShared_noChunk_fullCoop_kernel<T>
     <<<grid_dim, block_dim>>>
@@ -168,7 +168,7 @@ aadd_noShared_noChunk_fullCoop(T *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL);
+  *t_end = get_wall_time();
 
   int res = gpuAssert( cudaPeekAtLastError() );
 
@@ -210,8 +210,8 @@ aadd_noShared_chunk_fullCoop(T *h_img,
                              int img_sz,
                              int his_sz,
                              int num_threads,
-                             struct timeval *t_start,
-                             struct timeval *t_end,
+                             int64_t *t_start,
+                             int64_t *t_end,
                              int PRINT_INFO)
 {
   // allocate device memory
@@ -235,7 +235,7 @@ aadd_noShared_chunk_fullCoop(T *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   aadd_noShared_chunk_fullCoop_kernel<T>
     <<<grid, block>>>
@@ -243,7 +243,7 @@ aadd_noShared_chunk_fullCoop(T *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL);
+  *t_end = get_wall_time();
 
   int res = gpuAssert( cudaPeekAtLastError() );
 
@@ -290,8 +290,8 @@ aadd_noShared_chunk_coop(int *h_img,
                          int num_threads,
                          int coop_lvl,
                          int num_hists,
-                         struct timeval *t_start,
-                         struct timeval *t_end,
+                         int64_t *t_start,
+                         int64_t *t_end,
                          int PRINT_INFO)
 {
   // allocate device memory
@@ -326,7 +326,7 @@ aadd_noShared_chunk_coop(int *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   // should be handled thread-wise in kernel
   cudaMemset(d_his, 0, his_mem_sz * num_hists);
@@ -346,7 +346,7 @@ aadd_noShared_chunk_coop(int *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<Add<int>, T>
     <<<grid_dim_snd, block_dim_snd>>>
@@ -416,8 +416,8 @@ int aadd_shared_chunk_coop(T *h_img,
                            int num_threads,
                            int coop_lvl,
                            int num_hists,
-                           struct timeval *t_start,
-                           struct timeval *t_end,
+                           int64_t *t_start,
+                           int64_t *t_end,
                            int PRINT_INFO)
 {
   // allocate device memory
@@ -464,7 +464,7 @@ int aadd_shared_chunk_coop(T *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   aadd_shared_chunk_coop_kernel<T>
     <<<grid_dim_fst, block_dim_fst, his_mem_sz * hists_per_block>>>
@@ -473,7 +473,7 @@ int aadd_shared_chunk_coop(T *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<Add<int>, T>
     <<<grid_dim_snd, block_dim_snd>>>
@@ -548,8 +548,8 @@ int aadd_shared_chunk_coop_col(T *h_img,
                                int num_threads,
                                int coop_lvl,
                                int num_hists,
-                               struct timeval *t_start,
-                               struct timeval *t_end,
+                               int64_t *t_start,
+                               int64_t *t_end,
                                int PRINT_INFO)
 {
   // allocate device memory
@@ -597,7 +597,7 @@ int aadd_shared_chunk_coop_col(T *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   aadd_shared_chunk_coop_col_kernel<T>
     <<<grid_dim_fst, block_dim_fst, his_mem_sz * hists_per_block>>>
@@ -606,7 +606,7 @@ int aadd_shared_chunk_coop_col(T *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<Add<int>, T>
     <<<grid_dim_snd, block_dim_snd>>>
@@ -661,8 +661,8 @@ CAS_noShared_noChunk_fullCoop(IN_T  *h_img,
                               OUT_T *h_his,
                               int img_sz,
                               int his_sz,
-                              struct timeval *t_start,
-                              struct timeval *t_end,
+                              int64_t *t_start,
+                              int64_t *t_end,
                               int PRINT_INFO)
 {
   // allocate device memory
@@ -686,7 +686,7 @@ CAS_noShared_noChunk_fullCoop(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   CAS_noShared_noChunk_fullCoop_kernel<OP, IN_T, OUT_T>
     <<<grid_dim, block_dim>>>
@@ -694,7 +694,7 @@ CAS_noShared_noChunk_fullCoop(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL);
+  *t_end = get_wall_time();
 
   int res = gpuAssert( cudaPeekAtLastError() );
 
@@ -748,8 +748,8 @@ CAS_noShared_chunk_fullCoop(IN_T  *h_img,
                             int img_sz,
                             int his_sz,
                             int num_threads,
-                            struct timeval *t_start,
-                            struct timeval *t_end,
+                            int64_t *t_start,
+                            int64_t *t_end,
                             int PRINT_INFO)
 {
   // allocate device memory
@@ -773,7 +773,7 @@ CAS_noShared_chunk_fullCoop(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   CAS_noShared_chunk_fullCoop_kernel<OP, IN_T, OUT_T>
     <<<grid, block>>>
@@ -781,7 +781,7 @@ CAS_noShared_chunk_fullCoop(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL);
+  *t_end = get_wall_time();
 
   int res = gpuAssert( cudaPeekAtLastError() );
 
@@ -839,8 +839,8 @@ CAS_noShared_chunk_coop(IN_T  *h_img,
                         int num_threads,
                         int coop_lvl,
                         int num_hists,
-                        struct timeval *t_start,
-                        struct timeval *t_end,
+                        int64_t *t_start,
+                        int64_t *t_end,
                         int PRINT_INFO)
 {
   // allocate device memory
@@ -874,7 +874,7 @@ CAS_noShared_chunk_coop(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   // should be done thread-wise in kernel
   cudaMemset(d_his, 0, his_mem_sz * num_hists);
@@ -894,7 +894,7 @@ CAS_noShared_chunk_coop(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<OP, OUT_T>
     <<<grid_dim_snd, block_dim_snd>>>
@@ -979,8 +979,8 @@ CAS_shared_chunk_coop(IN_T  *h_img,
                       int num_threads,
                       int coop_lvl,
                       int num_hists,
-                      struct timeval *t_start,
-                      struct timeval *t_end,
+                      int64_t *t_start,
+                      int64_t *t_end,
                       int PRINT_INFO)
 {
   // because of shared memory -- should be avoided from host.cu
@@ -1034,7 +1034,7 @@ CAS_shared_chunk_coop(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   CAS_shared_chunk_coop_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst, his_mem_sz * hists_per_block>>>
@@ -1043,7 +1043,7 @@ CAS_shared_chunk_coop(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<OP, OUT_T>
     <<<grid_dim_snd, block_dim_snd>>>
@@ -1127,8 +1127,8 @@ CAS_shared_chunk_coop_col(IN_T  *h_img,
                           int num_threads,
                           int coop_lvl,
                           int num_hists,
-                          struct timeval *t_start,
-                          struct timeval *t_end,
+                          int64_t *t_start,
+                          int64_t *t_end,
                           int PRINT_INFO)
 {
   // because of shared memory -- should be avoided from host.cu
@@ -1182,7 +1182,7 @@ CAS_shared_chunk_coop_col(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   CAS_shared_chunk_coop_col_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst, his_mem_sz * hists_per_block>>>
@@ -1191,7 +1191,7 @@ CAS_shared_chunk_coop_col(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<OP, OUT_T>
     <<<grid_dim_snd, block_dim_snd>>>
@@ -1254,8 +1254,8 @@ exch_noShared_noChunk_fullCoop(IN_T  *h_img,
                                OUT_T *h_his,
                                int img_sz,
                                int his_sz,
-                               struct timeval *t_start,
-                               struct timeval *t_end,
+                               int64_t *t_start,
+                               int64_t *t_end,
                                int PRINT_INFO)
 {
   // allocate device memory
@@ -1287,7 +1287,7 @@ exch_noShared_noChunk_fullCoop(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   // Initializing locks
   // - doesn't matter if we use memset or an extra kernel
@@ -1306,7 +1306,7 @@ exch_noShared_noChunk_fullCoop(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL);
+  *t_end = get_wall_time();
 
   int res = gpuAssert( cudaPeekAtLastError() );
 
@@ -1369,8 +1369,8 @@ exch_noShared_chunk_fullCoop(IN_T  *h_img,
                              int his_sz,
                              int num_threads,
                              int seq_chunk,
-                             struct timeval *t_start,
-                             struct timeval *t_end,
+                             int64_t *t_start,
+                             int64_t *t_end,
                              int PRINT_INFO)
 {
   // allocate device memory
@@ -1400,7 +1400,7 @@ exch_noShared_chunk_fullCoop(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   // Initialize locks
   cudaMemset(d_locks, 0, his_mem_sz);
@@ -1419,7 +1419,7 @@ exch_noShared_chunk_fullCoop(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL);
+  *t_end = get_wall_time();
 
   int res = gpuAssert( cudaPeekAtLastError() );
 
@@ -1488,8 +1488,8 @@ exch_noShared_chunk_coop(IN_T  *h_img,
                          int seq_chunk,
                          int coop_lvl,
                          int num_hists,
-                         struct timeval *t_start,
-                         struct timeval *t_end,
+                         int64_t *t_start,
+                         int64_t *t_end,
                          int PRINT_INFO)
 {
   // allocate device memory
@@ -1527,7 +1527,7 @@ exch_noShared_chunk_coop(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   // Initialize histogram and locks. Obviously, this won't
   // work if the identity element is different from zero.
@@ -1554,7 +1554,7 @@ exch_noShared_chunk_coop(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<OP, OUT_T>
     <<<grid_dim_snd, block_dim_snd>>>
@@ -1649,8 +1649,8 @@ exch_shared_chunk_coop(IN_T  *h_img,
                        int seq_chunk,
                        int coop_lvl,
                        int num_hists,
-                       struct timeval *t_start,
-                       struct timeval *t_end,
+                       int64_t *t_start,
+                       int64_t *t_end,
                        int PRINT_INFO)
 {
   if(coop_lvl > BLOCK_SZ) {
@@ -1712,7 +1712,7 @@ exch_shared_chunk_coop(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   exch_shared_chunk_coop_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst,
@@ -1722,7 +1722,7 @@ exch_shared_chunk_coop(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<OP, OUT_T>
     <<<grid_dim_snd, block_dim_snd>>>
@@ -1816,8 +1816,8 @@ exch_shared_chunk_coop_col(IN_T  *h_img,
                            int seq_chunk,
                            int coop_lvl,
                            int num_hists,
-                           struct timeval *t_start,
-                           struct timeval *t_end,
+                           int64_t *t_start,
+                           int64_t *t_end,
                            int PRINT_INFO)
 {
   if(coop_lvl > BLOCK_SZ) {
@@ -1879,7 +1879,7 @@ exch_shared_chunk_coop_col(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   exch_shared_chunk_coop_col_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst,
@@ -1889,7 +1889,7 @@ exch_shared_chunk_coop_col(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<OP, OUT_T>
     <<<grid_dim_snd, block_dim_snd>>>
@@ -1989,8 +1989,8 @@ exch_shared_chunk_coop_shlock_exch(IN_T  *h_img,
                                    int seq_chunk,
                                    int coop_lvl,
                                    int num_hists,
-                                   struct timeval *t_start,
-                                   struct timeval *t_end,
+                                   int64_t *t_start,
+                                   int64_t *t_end,
                                    int PRINT_INFO)
 {
   if(coop_lvl > BLOCK_SZ) {
@@ -2059,7 +2059,7 @@ exch_shared_chunk_coop_shlock_exch(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   exch_shared_chunk_coop_shlock_exch_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst,
@@ -2069,7 +2069,7 @@ exch_shared_chunk_coop_shlock_exch(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<OP, OUT_T>
     <<<grid_dim_snd, block_dim_snd>>>
@@ -2170,8 +2170,8 @@ exch_shared_chunk_coop_shlock_threadid(IN_T  *h_img,
                                     int seq_chunk,
                                     int coop_lvl,
                                     int num_hists,
-                                    struct timeval *t_start,
-                                    struct timeval *t_end,
+                                    int64_t *t_start,
+                                    int64_t *t_end,
                                     int PRINT_INFO)
 {
   if(coop_lvl > BLOCK_SZ) {
@@ -2241,7 +2241,7 @@ exch_shared_chunk_coop_shlock_threadid(IN_T  *h_img,
   }
 
   // execute kernel
-  gettimeofday(t_start, NULL);
+  *t_start = get_wall_time();
 
   exch_shared_chunk_coop_shlock_threadid_kernel<OP, IN_T, OUT_T>
     <<<grid_dim_fst, block_dim_fst,
@@ -2251,7 +2251,7 @@ exch_shared_chunk_coop_shlock_threadid(IN_T  *h_img,
 
   cudaThreadSynchronize();
 
-  gettimeofday(t_end, NULL); // do not time reduction
+  *t_end = get_wall_time();
 
   reduce_kernel<OP, OUT_T>
     <<<grid_dim_snd, block_dim_snd>>>
