@@ -51,8 +51,8 @@
 # We run each kernel 100 times just because it really doesn't take that long.
 
 set -e # Exit on the first error.
-make datcuda # Make sure the datasets exist.
-make # Make sure the ./host executable exists.
+make datcuda > /dev/stderr # Make sure the datasets exist.
+make > /dev/stderr # Make sure the ./host executable exists.
 
 new_page() {
     echo '\f' # page break
