@@ -2,7 +2,6 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "kernels.cu.h"
 #include "misc.cu.h"
@@ -274,12 +273,6 @@ int main(int argc, const char* argv[])
   } else if(restrict && coop_lvl_tmp > BLOCK_SZ) {
     printf("Error: Cooperation level exceeds block size\n");
     return -1;
-  }
-
-  /* check that data file exists */
-  if( access(argv[4], F_OK) == -1 ) {
-    printf("Error: file '%s' does not exist\n", argv[4]);
-    return 2;
   }
 
   /* get read handle */
