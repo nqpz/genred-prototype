@@ -6,7 +6,6 @@ NVCC=nvcc
 NVCC_FLAGS := -x cu -Wno-deprecated-gpu-targets
 C_OPTIONS := -Wall -Wextra -Werror -O3
 C_FLAGS := $(foreach option, $(C_OPTIONS), --compiler-options $(option))
-LIBS := -lm
 
 REQS=kernels.cu.h misc.cu.h
 CU_FILE=host
@@ -33,7 +32,7 @@ all: $(CU_FILE)
 
 # Compile CUDA prototype
 $(CU_FILE): $(CU_FILE).cu $(REQS)
-	$(NVCC) $(NVCC_FLAGS) $(C_FLAGS) $< -o $@ $(LIBS)
+	$(NVCC) $(NVCC_FLAGS) $(C_FLAGS) $< -o $@
 
 # Compile Futhark reduction program
 $(FUT_FILE): $(FUT_FILE).fut
