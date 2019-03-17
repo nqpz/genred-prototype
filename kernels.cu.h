@@ -1953,17 +1953,19 @@ exch_shared_chunk_coop_shlock_exch_kernel(IN_T  *d_img,
         done = 1;
       }
 
-      while(!done) {
+      while(__any_sync(0xffffffff, !done)) {
         // Save the value at the histogram index in register memory.
         OUT_T saved_val = sh_his[lhidx + idx];
         // Temporarily use the histogram as a lock.  This write only works if
         // the thread id (representable in a few bits, but here just stored as
         // an int) does not take up more space than an OUT_T element.
         __syncwarp();
-        sh_his[lhidx + idx] = (OUT_T) 0;
+        if (!done) {
+          sh_his[lhidx + idx] = (OUT_T) 0;
+        }
         __syncwarp();
         // Check if this thread won the write.
-        if( atomicExch((int *)&sh_his[lhidx + idx], 1) == 0 ) {
+        if( !done && atomicExch((int *)&sh_his[lhidx + idx], 1) == 0 ) {
           sh_his[lhidx + idx] =
             OP::apply(saved_val, val);
           done = 1;
@@ -2134,17 +2136,19 @@ exch_shared_chunk_coop_shlock_threadid_kernel(IN_T  *d_img,
         done = 1;
       }
 
-      while(!done) {
+      while(__any_sync(0xffffffff, !done)) {
         // Save the value at the histogram index in register memory.
         OUT_T saved_val = sh_his[lhidx + idx];
         // Temporarily use the histogram as a lock.  This write only works if
         // the thread id (representable in a few bits, but here just stored as
         // an int) does not take up more space than an OUT_T element.
         __syncwarp();
-        sh_his[lhidx + idx] = (OUT_T) tid;
+        if (!done) {
+          sh_his[lhidx + idx] = (OUT_T) tid;
+        }
         __syncwarp();
         // Check if this thread won the write.
-        if( (int) sh_his[lhidx + idx] == tid ) {
+        if( !done && (int) sh_his[lhidx + idx] == tid ) {
           sh_his[lhidx + idx] =
             OP::apply(saved_val, val);
           done = 1;
