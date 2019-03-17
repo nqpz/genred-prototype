@@ -1959,7 +1959,9 @@ exch_shared_chunk_coop_shlock_exch_kernel(IN_T  *d_img,
         // Temporarily use the histogram as a lock.  This write only works if
         // the thread id (representable in a few bits, but here just stored as
         // an int) does not take up more space than an OUT_T element.
+        __syncwarp();
         sh_his[lhidx + idx] = (OUT_T) 0;
+        __syncwarp();
         // Check if this thread won the write.
         if( atomicExch((int *)&sh_his[lhidx + idx], 1) == 0 ) {
           sh_his[lhidx + idx] =
@@ -2138,7 +2140,9 @@ exch_shared_chunk_coop_shlock_threadid_kernel(IN_T  *d_img,
         // Temporarily use the histogram as a lock.  This write only works if
         // the thread id (representable in a few bits, but here just stored as
         // an int) does not take up more space than an OUT_T element.
+        __syncwarp();
         sh_his[lhidx + idx] = (OUT_T) tid;
+        __syncwarp();
         // Check if this thread won the write.
         if( (int) sh_his[lhidx + idx] == tid ) {
           sh_his[lhidx + idx] =
