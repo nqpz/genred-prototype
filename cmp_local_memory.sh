@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 #
 # We compare the different local-memory-using kernels.  For each of the three
 # methods -- atomicAdd, atomicCAS, and atomicExch -- we compare the
@@ -51,12 +51,9 @@
 # We run each kernel 100 times just because it really doesn't take that long.
 
 set -e # Exit on the first error.
-make datcuda > /dev/stderr # Make sure the datasets exist.
-make > /dev/stderr # Make sure the ./host executable exists.
-
-new_page() {
-    echo $'\f' # page break
-}
+make -q datcuda # Make sure the datasets exist.
+make -q # Make sure the ./host executable exists.
+make -q query # Make sure the ./query executable exists.
 
 run() {
     kernel=$1
@@ -74,36 +71,38 @@ run() {
 }
 
 main() {
-    for hist_size in 16 64 256 1024 4096; do
-        echo "  Dataset: random; histogram size: $hist_size"
-        for id in 12 13 14 22 23 24 32 33 34 35 36; do
-            echo "    $(run $id 0 $hist_size)"
-        done
-        echo
-    done
-    new_page
+    ./query
+    echo
 
     for hist_size in 16 64 256 1024 4096; do
-        echo "  Dataset: all indices the same; histogram size: $hist_size"
+        echo "Dataset: random; histogram size: $hist_size"
         for id in 12 13 14 22 23 24 32 33 34 35 36; do
-            echo "    $(run $id 0 $hist_size zeros)"
+            echo "  $(run $id 0 $hist_size)"
         done
         echo
     done
-    new_page
+    echo
+
+    for hist_size in 16 64 256 1024 4096; do
+        echo "Dataset: all indices the same; histogram size: $hist_size"
+        for id in 12 13 14 22 23 24 32 33 34 35 36; do
+            echo "  $(run $id 0 $hist_size zeros)"
+        done
+        echo
+    done
+    echo
 
     hist_size=32
-    echo "  Dataset: no conflicts for row-based cooperation; histogram size: $hist_size"
+    echo "Dataset: no conflicts for row-based cooperation; histogram size: $hist_size"
     for id in 12 13 14 22 23 24 32 33 34 35 36; do
-        echo "    $(run $id 0 $hist_size no-conflicts-warp-$hist_size)"
+        echo "  $(run $id 0 $hist_size no-conflicts-warp-$hist_size)"
     done
     echo
     hist_size=256
-    echo "  Dataset: no conflicts for row-based cooperation; histogram size: $hist_size"
+    echo "Dataset: no conflicts for row-based cooperation; histogram size: $hist_size"
     for id in 12 13 14 22 23 24 32 33 34 35 36; do
-        echo "    $(run $id 0 $hist_size no-conflicts-warp-$hist_size 9999872)"
+        echo "  $(run $id 0 $hist_size no-conflicts-warp-$hist_size 9999872)"
     done
-    new_page
 }
 
 main

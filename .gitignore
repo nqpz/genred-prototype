@@ -1,5 +1,6 @@
 # binaries (and intermediate files)
 /host
+/query
 /reduce
 /reduce.c
 

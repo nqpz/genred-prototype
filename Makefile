@@ -80,6 +80,9 @@ $(PDF_PATH)/hist-%.pdf $(PDF_PATH)/hist-%-full.pdf: $(PDF_PATH) $(RUNT_PATH)/his
 	@echo '=== Generating graphs'
 	python plot.py $* $(DATA_SIZE) $(COOP_LEVELS)
 
+query: query.cu
+	nvcc -o query query.cu
+
 clean_runtimes:
 	rm -fr $(RUNT_PATH)
 
@@ -92,5 +95,6 @@ clean_pdfs:
 clean_bins:
 	rm -f $(CU_FILE)
 	rm -f $(FUT_FILE) $(FUT_FILE).c
+	rm -f query
 
 clean: clean_runtimes clean_data clean_pdfs clean_bins
