@@ -356,6 +356,7 @@ int main(int argc, const char* argv[])
     }
   }
 
+  // For global kernels
   int num_hists   = NUM_HISTOS(num_threads, coop_lvl);
 
   if(print_info) {
@@ -374,11 +375,15 @@ int main(int argc, const char* argv[])
       printf("Sequential chunk:     %d\n", seq_chunk);
       printf("Cooperation level:    %d\n", num_threads);
       printf("Number of histograms: %d\n", 1);
-    } else {
+    } else if(kernel == AADD_GLOBAL_CHUNK_COOP ||
+              kernel == ACAS_GLOBAL_CHUNK_COOP ||
+              kernel == AEXCH_GLOBAL_CHUNK_COOP) {
       printf("Number of threads:    %d\n", num_threads);
       printf("Sequential chunk:     %d\n", seq_chunk);
       printf("Cooperation level:    %d\n", coop_lvl);
       printf("Number of histograms: %d\n", num_hists);
+    } else {
+      printf("Cooperation level:    %d\n", coop_lvl);
     }
     printf("====\n");
   }
