@@ -4,10 +4,10 @@
 #include <math.h>
 #include <cassert>
 
-//#define HWD       (61440)
-#define HWD       (30720)
-#define BLOCK_SZ  (1024)
-#define SH_MEM_SZ (48 * 1024)
+// I'm too lazy to put this in a struct.
+int HWD;
+int BLOCK_SZ;
+unsigned int SH_MEM_SZ;
 #define WARP_SZ   (32)
 
 #define NUM_THREADS(n)  min(n, HWD)

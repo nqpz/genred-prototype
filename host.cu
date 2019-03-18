@@ -236,6 +236,23 @@ int kernel_run(int kernel,
   return res;
 }
 
+void find_hardware_details(int print_info) {
+  int nDevices;
+  cudaGetDeviceCount(&nDevices);
+  cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop, 0);
+  HWD = prop.maxThreadsPerMultiProcessor * prop.multiProcessorCount;
+  BLOCK_SZ = prop.maxThreadsPerBlock;
+  SH_MEM_SZ = prop.sharedMemPerBlock;
+  if (print_info) {
+    printf("Device name: %s\n", prop.name);
+    printf("Number of hardware threads: %d\n", HWD);
+    printf("Block size: %d\n", BLOCK_SZ);
+    printf("Shared memory size: %d\n", SH_MEM_SZ);
+    puts("====");
+  }
+}
+
 int main(int argc, const char* argv[])
 {
   /* validate and parse cmd-line arguments */
@@ -255,6 +272,8 @@ int main(int argc, const char* argv[])
   if (print_info) {
     printf("\nNumber of runs: %d\n", n_runs);
   }
+
+  find_hardware_details(print_info);
 
   /* abort as soon as possible */
   unsigned int his_mem_sz = his_sz * sizeof(OUT_T);
