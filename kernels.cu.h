@@ -1237,14 +1237,12 @@ exch_noShared_noChunk_fullCoop_kernel(IN_T  *d_img,
   }
 
   while(!done) {
+    __threadfence();
     if(atomicExch((int *)&locks[idx], 1) == 0) {
       d_his[idx] = OP::apply(d_his[idx], val);
       locks[idx] = 0;
       done = 1;
     }
-    __threadfence(); // the code also works without this
-                     // threadfence -- but it is slower
-                     // without (haven't thought about why)
   }
 }
 
@@ -1350,12 +1348,12 @@ exch_noShared_chunk_fullCoop_kernel(OUT_T *d_img,
       }
 
       while(!done) {
+        __threadfence();
         if( atomicExch((int *)&d_locks[idx], 1) == 0 ) {
           d_his[idx] = OP::apply(d_his[idx], val);
           d_locks[idx] = 0;
           done = 1;
         }
-        __threadfence();
       }
     }
   }
@@ -1465,13 +1463,13 @@ exch_noShared_chunk_coop_kernel(IN_T  *d_img,
       }
 
       while(!done) {
+        __threadfence();
         if( atomicExch((int *)&d_locks[ghidx + idx], 1) == 0 ) {
           d_his[ghidx + idx] =
             OP::apply(d_his[ghidx + idx], val);
           d_locks[ghidx + idx] = 0;
           done = 1;
         }
-        __threadfence();
       }
     }
   }
