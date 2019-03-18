@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 #
 # We compare the different local-memory-using kernels.  For each of the three
 # methods -- atomicAdd, atomicCAS, and atomicExch -- we compare the
@@ -55,7 +55,7 @@ make datcuda > /dev/stderr # Make sure the datasets exist.
 make > /dev/stderr # Make sure the ./host executable exists.
 
 new_page() {
-    echo '\f' # page break
+    echo $'\f' # page break
 }
 
 run() {
