@@ -1951,19 +1951,18 @@ exch_shared_chunk_coop_shlock_exch_kernel(IN_T  *d_img,
         done = 1;
       }
 
-      while(__any_sync(0xffffffff, !done)) {
+      while(!done) {
         // Save the value at the histogram index in register memory.
         OUT_T saved_val = sh_his[lhidx + idx];
         // Temporarily use the histogram as a lock.  This write only works if
         // the thread id (representable in a few bits, but here just stored as
         // an int) does not take up more space than an OUT_T element.
-        __syncwarp();
-        if (!done) {
-          sh_his[lhidx + idx] = (OUT_T) 0;
-        }
-        __syncwarp();
+        unsigned mask = __activemask();
+        __syncwarp(mask);
+        sh_his[lhidx + idx] = (OUT_T) 0;
+        __syncwarp(mask);
         // Check if this thread won the write.
-        if( !done && atomicExch((int *)&sh_his[lhidx + idx], 1) == 0 ) {
+        if( atomicExch((int *)&sh_his[lhidx + idx], 1) == 0 ) {
           sh_his[lhidx + idx] =
             OP::apply(saved_val, val);
           done = 1;
@@ -2134,19 +2133,18 @@ exch_shared_chunk_coop_shlock_threadid_kernel(IN_T  *d_img,
         done = 1;
       }
 
-      while(__any_sync(0xffffffff, !done)) {
+      while(!done) {
         // Save the value at the histogram index in register memory.
         OUT_T saved_val = sh_his[lhidx + idx];
         // Temporarily use the histogram as a lock.  This write only works if
         // the thread id (representable in a few bits, but here just stored as
         // an int) does not take up more space than an OUT_T element.
-        __syncwarp();
-        if (!done) {
-          sh_his[lhidx + idx] = (OUT_T) tid;
-        }
-        __syncwarp();
+        unsigned mask = __activemask();
+        __syncwarp(mask);
+        sh_his[lhidx + idx] = (OUT_T) tid;
+        __syncwarp(mask);
         // Check if this thread won the write.
-        if( !done && (int) sh_his[lhidx + idx] == tid ) {
+        if( (int) sh_his[lhidx + idx] == tid ) {
           sh_his[lhidx + idx] =
             OP::apply(saved_val, val);
           done = 1;
