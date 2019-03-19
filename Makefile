@@ -4,7 +4,11 @@ NVCC=nvcc
 # -arch=compute_35 -code=sm_35 or just -arch=sm_35
 #NVCC_FLAGS:= -arch=compute_20 -code=sm_35 -x cu -Wno-deprecated-gpu-targets
 NVCC_FLAGS := -x cu -Wno-deprecated-gpu-targets
+ifeq ($(OS),Windows_NT)
+C_OPTIONS := /Wall /O2 # Assume Visual Studio
+else
 C_OPTIONS := -Wall -Wextra -Werror -O3
+endif
 C_FLAGS := $(foreach option, $(C_OPTIONS), --compiler-options $(option))
 
 REQS=kernels.cu.h misc.cu.h
