@@ -1437,7 +1437,7 @@ exch_noShared_chunk_fullCoop(IN_T  *h_img,
 template<class OP, class IN_T, class OUT_T>
 __global__ void
 exch_noShared_chunk_coop_kernel(IN_T  *d_img,
-                                OUT_T *d_his,
+                                volatile OUT_T *d_his,
                                 int img_sz,
                                 int his_sz,
                                 int num_threads,
